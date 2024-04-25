@@ -1,4 +1,4 @@
-# LILAC
+# Welcome to LILAC
 
 > [!IMPORTANT]
 > ***WORKING IN PROGRESS***
@@ -15,3 +15,5 @@ For example, between C++ and C#:
 - P/Invoke couldn't support C++ well because of name mangling etc.
 
 But, with power of LLVM, we hope that LILAC will generate bindings between C++ and C# ...or what else!
+
+**Let's break down language barrier!**
