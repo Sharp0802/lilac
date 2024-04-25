@@ -19,5 +19,6 @@ namespace lilac
         auto* unit = ctx.getTranslationUnitDecl();
         ASTVisitor visitor;
         visitor.TraverseDecl(unit);
+        m_Action->ReportASTInfo(m_File, visitor.GetInfo());
     }
 }

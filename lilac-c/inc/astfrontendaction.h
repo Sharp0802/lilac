@@ -3,6 +3,7 @@
 
 #include <clang/Frontend/FrontendAction.h>
 
+#include "astvisitor.h"
 #include "frontendactionfactory.h"
 
 namespace lilac
@@ -12,7 +13,9 @@ namespace lilac
         FrontendActionFactory* m_Owner;
 
     public:
-        ASTFrontendAction(FrontendActionFactory* owner);
+        explicit ASTFrontendAction(FrontendActionFactory* owner);
+
+        void ReportASTInfo(llvm::StringRef file, const ASTInfo& info) const;
 
     protected:
         std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(
