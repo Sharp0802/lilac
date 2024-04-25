@@ -41,7 +41,9 @@ namespace lilac
 
         bool VisitFunctionDecl(clang::FunctionDecl* decl)
         {
-            m_Functions.push_back(decl);
+            if (IsVisibilityAllowed(decl))
+                m_Functions.push_back(decl);
+            return true;
         }
 
         [[nodiscard]]
