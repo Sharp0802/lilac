@@ -5,19 +5,13 @@
 
 namespace lilac
 {
-    template<typename TTarget, typename TResult>
+    template<typename TResult>
     class VisitorBase
     {
-        TTarget* m_Target;
-
     protected:
         static bool IsVisibilityAllowed(const clang::NamedDecl* decl)
         {
             return decl->getVisibility() == clang::Visibility::DefaultVisibility;
-        }
-
-        explicit VisitorBase(TTarget* target) : m_Target(target)
-        {
         }
 
     public:

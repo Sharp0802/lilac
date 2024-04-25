@@ -2,7 +2,7 @@
 
 namespace lilac
 {
-    RecordVisitor::RecordVisitor(clang::RecordDecl* record): VisitorBase(record), m_Record(record)
+    RecordVisitor::RecordVisitor(clang::RecordDecl* record): m_Record(record)
     {
     }
 

@@ -15,7 +15,7 @@ namespace lilac
 
     class RecordVisitor
             : public clang::RecursiveASTVisitor<RecordVisitor>,
-              public VisitorBase<clang::RecordDecl, RecordInfo>
+              public VisitorBase<RecordInfo>
     {
         clang::RecordDecl* m_Record;
         std::vector<clang::MSPropertyDecl*> m_Properties;

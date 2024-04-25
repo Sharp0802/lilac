@@ -14,8 +14,8 @@ namespace lilac
     };
 
     class EnumVisitor
-        : public clang::RecursiveASTVisitor<EnumVisitor>,
-          public VisitorBase<clang::EnumDecl, EnumInfo>
+            : public clang::RecursiveASTVisitor<EnumVisitor>,
+              public VisitorBase<EnumInfo>
     {
         clang::EnumDecl* m_Enum;
         std::vector<clang::EnumConstantDecl*> m_Constant;

@@ -2,7 +2,7 @@
 
 namespace lilac
 {
-    EnumVisitor::EnumVisitor(clang::EnumDecl* decl): VisitorBase(decl), m_Enum(decl)
+    EnumVisitor::EnumVisitor(clang::EnumDecl* decl): m_Enum(decl)
     {
     }
 
