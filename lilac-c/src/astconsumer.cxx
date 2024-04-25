@@ -7,9 +7,16 @@
 
 namespace lilac
 {
+    struct ASTInfo
+    {
+        std::vector<RecordInfo> Records;
+        std::vector<EnumInfo> Enums;
+        std::vector<clang::FunctionDecl*> Functions;
+    };
 
     class ASTVisitor final
             : public clang::RecursiveASTVisitor<ASTVisitor>,
+              public VisitorBase<ASTInfo>
     {
         std::vector<RecordInfo> m_Records;
         std::vector<EnumInfo> m_Enums;
@@ -35,6 +42,16 @@ namespace lilac
         bool VisitFunctionDecl(clang::FunctionDecl* decl)
         {
             m_Functions.push_back(decl);
+        }
+
+        [[nodiscard]]
+        ASTInfo GetInfo() const override
+        {
+            return {
+                m_Records,
+                m_Enums,
+                m_Functions
+            };
         }
     };
 
