@@ -8,10 +8,12 @@
 namespace lilac
 {
 
-    class ASTVisitor : public clang::RecursiveASTVisitor<ASTVisitor>
+    class ASTVisitor final
+            : public clang::RecursiveASTVisitor<ASTVisitor>,
     {
         std::vector<RecordInfo> m_Records;
         std::vector<EnumInfo> m_Enums;
+        std::vector<clang::FunctionDecl*> m_Functions;
 
     public:
         bool VisitCXXRecordDecl(clang::RecordDecl* decl)
@@ -28,6 +30,11 @@ namespace lilac
             visitor.TraverseDecl(decl);
             m_Enums.push_back(visitor.GetInfo());
             return true;
+        }
+
+        bool VisitFunctionDecl(clang::FunctionDecl* decl)
+        {
+            m_Functions.push_back(decl);
         }
     };
 
