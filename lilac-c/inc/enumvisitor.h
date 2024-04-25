@@ -13,7 +13,7 @@ namespace lilac
         std::vector<clang::EnumConstantDecl*> Constant;
     };
 
-    class EnumVisitor
+    class EnumVisitor final
             : public clang::RecursiveASTVisitor<EnumVisitor>,
               public VisitorBase<EnumInfo>
     {

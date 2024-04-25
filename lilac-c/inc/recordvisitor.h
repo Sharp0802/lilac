@@ -13,7 +13,7 @@ namespace lilac
         std::vector<clang::CXXMethodDecl*> Methods;
     };
 
-    class RecordVisitor
+    class RecordVisitor final
             : public clang::RecursiveASTVisitor<RecordVisitor>,
               public VisitorBase<RecordInfo>
     {
