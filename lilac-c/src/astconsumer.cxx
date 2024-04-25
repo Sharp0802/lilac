@@ -57,7 +57,10 @@ namespace lilac
         }
     };
 
-    ASTConsumer::ASTConsumer(clang::CompilerInstance& ci, llvm::StringRef file)
+    ASTConsumer::ASTConsumer(ASTFrontendAction* action, clang::CompilerInstance& ci, llvm::StringRef file)
+        : m_Action(action),
+          m_Compiler(ci),
+          m_File(file)
     {
     }
 

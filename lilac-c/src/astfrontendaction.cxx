@@ -4,6 +4,10 @@
 
 namespace lilac
 {
+    ASTFrontendAction::ASTFrontendAction(FrontendActionFactory* owner): m_Owner(owner)
+    {
+    }
+
     std::unique_ptr<clang::ASTConsumer> ASTFrontendAction::CreateASTConsumer(
         clang::CompilerInstance& ci,
         llvm::StringRef file)
