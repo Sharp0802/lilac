@@ -34,20 +34,20 @@ namespace lilac
         std::string name,
         size_t size,
         size_t alignment,
-        std::initializer_list<Property> properties,
-        std::initializer_list<Method> methods)
+        std::vector<Property> properties,
+        std::vector<Method> methods)
         : ComplexType(std::move(name), size, alignment),
-          m_Properties(properties),
-          m_Methods(methods)
+          m_Properties(std::move(properties)),
+          m_Methods(std::move(methods))
     {
     }
 
-    std::vector<Property> ResolvedType::getProperties() const
+    std::vector<Property>& ResolvedType::getProperties()
     {
         return m_Properties;
     }
 
-    std::vector<Method> ResolvedType::getMethods() const
+    std::vector<Method>& ResolvedType::getMethods()
     {
         return m_Methods;
     }

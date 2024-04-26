@@ -37,14 +37,14 @@ namespace lilac
             std::string name,
             size_t size,
             size_t alignment,
-            std::initializer_list<Property> properties,
-            std::initializer_list<Method> methods);
+            std::vector<Property> properties,
+            std::vector<Method> methods);
 
         [[nodiscard]]
-        std::vector<Property> getProperties() const;
+        std::vector<Property>& getProperties();
 
         [[nodiscard]]
-        std::vector<Method> getMethods() const;
+        std::vector<Method>& getMethods();
     };
 }
 
