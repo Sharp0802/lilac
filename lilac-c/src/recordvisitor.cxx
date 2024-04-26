@@ -20,17 +20,13 @@ namespace lilac::cxx
         }
 
         m_Properties.push_back(property);
-        llvm::outs() << m_Record->getName() << "::" << property->getName() << '\n';
         return true;
     }
 
     bool RecordVisitor::VisitCXXMethodDecl(clang::CXXMethodDecl* method)
     {
         if (IsVisibilityAllowed(method))
-        {
             m_Methods.push_back(method);
-            llvm::outs() << m_Record->getName() << "::" << method->getName() << '\n';
-        }
         return true;
     }
 

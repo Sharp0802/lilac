@@ -9,10 +9,7 @@ namespace lilac::cxx
     bool EnumVisitor::VisitEnumConstantDecl(clang::EnumConstantDecl* constant)
     {
         if (IsVisibilityAllowed(constant))
-        {
             m_Constant.push_back(constant);
-            llvm::outs() << m_Enum->getName() << "::" << constant->getName() << '\n';
-        }
         return true;
     }
 
