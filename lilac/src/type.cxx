@@ -4,6 +4,13 @@
 
 namespace lilac
 {
+    Type::Type(TypeKind kind, TypeConstraint constraint, const Type& next)
+        : m_Kind(kind),
+          m_Constraint(constraint),
+          m_Next(std::make_shared<Type>(next))
+    {
+    }
+
     Type::Type(TypeKind kind, TypeConstraint constraint, std::shared_ptr<Type> next)
         : m_Kind(kind),
           m_Constraint(constraint),
@@ -21,8 +28,8 @@ namespace lilac
         return m_Constraint;
     }
 
-    std::shared_ptr<Type> Type::getNext() const
+    Type Type::getNext() const
     {
-        return m_Next;
+        return *m_Next;
     }
 }

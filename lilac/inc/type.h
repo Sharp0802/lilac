@@ -33,6 +33,7 @@ namespace lilac
         LLType_String,
 #pragma endregion
 
+        LLType_Enum,
         LLType_Complex
     };
 
@@ -49,6 +50,8 @@ namespace lilac
         std::shared_ptr<Type> m_Next;
 
     public:
+        Type(TypeKind kind, TypeConstraint constraint, const Type& next);
+
         Type(TypeKind kind, TypeConstraint constraint, std::shared_ptr<Type> next);
 
         [[nodiscard]]
@@ -58,7 +61,7 @@ namespace lilac
         TypeConstraint getConstraint() const;
 
         [[nodiscard]]
-        std::shared_ptr<Type> getNext() const;
+        Type getNext() const;
     };
 }
 
