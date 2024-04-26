@@ -23,6 +23,9 @@ namespace lilac
         LLType_U32,
         LLType_U64,
 
+        LLType_SIPtr,
+        LLType_UIPtr,
+
         LLType_FP16,
         LLType_FP32,
         LLType_FP64,
