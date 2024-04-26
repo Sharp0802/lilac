@@ -3,11 +3,12 @@
 
 #include <vector>
 
-#include "complextype.h"
 #include "type.h"
 
 namespace lilac
 {
+    class ComplexType;
+
     struct Parameter
     {
         std::string Name;
@@ -24,8 +25,6 @@ namespace lilac
         Function(std::string name, Type ret, std::initializer_list<Parameter> params);
 
     public:
-        virtual ~Function() = 0;
-
         [[nodiscard]]
         std::string getName() const;
 
@@ -44,10 +43,16 @@ namespace lilac
         Method(std::shared_ptr<ComplexType> owner, std::string name, Type ret, std::initializer_list<Parameter> params);
 
     public:
-        ~Method() override = 0;
-
         [[nodiscard]]
         std::shared_ptr<ComplexType> getOwner() const;
+    };
+
+    struct Property
+    {
+        std::string Name;
+        Type Type;
+        std::shared_ptr<Method> Getter;
+        std::shared_ptr<Method> Setter;
     };
 }
 

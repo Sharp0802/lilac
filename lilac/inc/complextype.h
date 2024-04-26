@@ -1,7 +1,6 @@
 #ifndef COMPLEXTYPE_H
 #define COMPLEXTYPE_H
 
-#include <optional>
 #include <vector>
 
 #include "method.h"
@@ -26,14 +25,6 @@ namespace lilac
 
         [[nodiscard]]
         size_t getAlignment() const;
-    };
-
-    struct Property
-    {
-        std::string Name;
-        Type Type;
-        std::optional<Method> Getter;
-        std::optional<Method> Setter;
     };
 
     class ResolvedType : public ComplexType
