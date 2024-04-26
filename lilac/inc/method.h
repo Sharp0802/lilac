@@ -12,45 +12,33 @@ namespace lilac
     struct Parameter
     {
         std::string Name;
-        Type Type;
+        std::shared_ptr<Type> Type;
     };
 
-    class Function
+    class Method
     {
         std::string m_Name;
-        Type m_Return;
+        std::shared_ptr<Type> m_Return;
         std::vector<Parameter> m_Parameters;
 
     protected:
-        Function(std::string name, Type ret, std::initializer_list<Parameter> params);
+        Method(std::string name, std::shared_ptr<Type> ret, std::vector<Parameter> params);
 
     public:
         [[nodiscard]]
         std::string getName() const;
 
         [[nodiscard]]
-        Type getReturn() const;
+        std::shared_ptr<Type> getReturn() const;
 
         [[nodiscard]]
         std::vector<Parameter> getParameters() const;
     };
 
-    class Method : public Function
-    {
-        std::shared_ptr<ComplexType> m_Owner;
-
-    protected:
-        Method(std::shared_ptr<ComplexType> owner, std::string name, Type ret, std::initializer_list<Parameter> params);
-
-    public:
-        [[nodiscard]]
-        std::shared_ptr<ComplexType> getOwner() const;
-    };
-
     struct Property
     {
         std::string Name;
-        Type Type;
+        std::shared_ptr<Type> Type;
         std::shared_ptr<Method> Getter;
         std::shared_ptr<Method> Setter;
     };
