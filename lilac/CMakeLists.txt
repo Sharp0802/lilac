@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 26)
 
 file(GLOB_RECURSE SOURCES src/*.cxx)
 file(GLOB_RECURSE HEADERS inc/*.h)
+set(HEADERS ${HEADERS} lilac.h)
 
 add_library(lilac SHARED ${SOURCES} ${HEADERS})
 target_compile_options(lilac PRIVATE -fno-rtti)
