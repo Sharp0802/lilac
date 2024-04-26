@@ -5,7 +5,7 @@
 
 #include "astvisitor.h"
 
-namespace lilac
+namespace lilac::cxx
 {
     class FrontendActionFactory : public clang::tooling::FrontendActionFactory
     {

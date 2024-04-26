@@ -1,6 +1,6 @@
 #include "enumvisitor.h"
 
-namespace lilac
+namespace lilac::cxx
 {
     EnumVisitor::EnumVisitor(clang::EnumDecl* decl): m_Enum(decl)
     {

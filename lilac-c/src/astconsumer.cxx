@@ -4,7 +4,7 @@
 
 #include "astvisitor.h"
 
-namespace lilac
+namespace lilac::cxx
 {
 
     ASTConsumer::ASTConsumer(ASTFrontendAction* action, clang::CompilerInstance& ci, llvm::StringRef file)

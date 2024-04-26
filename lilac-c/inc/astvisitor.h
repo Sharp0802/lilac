@@ -4,7 +4,7 @@
 #include "enumvisitor.h"
 #include "recordvisitor.h"
 
-namespace lilac
+namespace lilac::cxx
 {
     struct ASTInfo
     {

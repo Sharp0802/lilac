@@ -5,7 +5,7 @@
 
 #include "visitorbase.h"
 
-namespace lilac
+namespace lilac::cxx
 {
     struct EnumInfo
     {

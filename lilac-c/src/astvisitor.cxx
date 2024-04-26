@@ -1,6 +1,6 @@
 #include "astvisitor.h"
 
-namespace lilac
+namespace lilac::cxx
 {
     bool ASTVisitor::VisitCXXRecordDecl(clang::RecordDecl* decl)
     {

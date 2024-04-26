@@ -3,7 +3,7 @@
 
 #include <clang/AST/RecursiveASTVisitor.h>
 
-namespace lilac
+namespace lilac::cxx
 {
     template<typename TResult>
     class VisitorBase

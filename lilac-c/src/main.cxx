@@ -23,6 +23,6 @@ int main(int argc, const char* argv[])
     }
     clang::tooling::ClangTool tool(parser->getCompilations(), parser->getSourcePathList());
 
-    auto factory = std::make_unique<lilac::FrontendActionFactory>();
+    auto factory = std::make_unique<lilac::cxx::FrontendActionFactory>();
     return tool.run(factory.get());
 }

@@ -6,7 +6,7 @@
 #include "astvisitor.h"
 #include "frontendactionfactory.h"
 
-namespace lilac
+namespace lilac::cxx
 {
     class ASTFrontendAction : public clang::ASTFrontendAction
     {

@@ -2,7 +2,7 @@
 
 #include "astconsumer.h"
 
-namespace lilac
+namespace lilac::cxx
 {
     ASTFrontendAction::ASTFrontendAction(FrontendActionFactory* owner): m_Owner(owner)
     {

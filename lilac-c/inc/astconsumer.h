@@ -6,7 +6,7 @@
 
 #include "astfrontendaction.h"
 
-namespace lilac
+namespace lilac::cxx
 {
     class ASTConsumer : public clang::ASTConsumer
     {

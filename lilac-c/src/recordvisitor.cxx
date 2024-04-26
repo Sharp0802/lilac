@@ -1,6 +1,6 @@
 #include "recordvisitor.h"
 
-namespace lilac
+namespace lilac::cxx
 {
     RecordVisitor::RecordVisitor(clang::RecordDecl* record): m_Record(record)
     {
