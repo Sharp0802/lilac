@@ -148,6 +148,7 @@ namespace lilac::cxx
 
     void FrontendActionFactory::ReportASTInfo(const llvm::StringRef file, const ASTInfo& info)
     {
+#pragma region prebake types
         std::map<clang::QualType, std::shared_ptr<Type>> types;
         for (const auto& [
                  handle,
@@ -166,14 +167,16 @@ namespace lilac::cxx
                 std::vector<auto>()
             );
         }
+#pragma endregion
 
-        std::vector<EnumType> enums;
-
+#pragma region functions
         std::vector<Method> functions;
         functions.reserve(info.Functions.size());
         for (const auto function: info.Functions)
             functions.push_back(BakeFunction(function, types));
+#pragma endregion
 
+#pragma region resolved types
         for (const auto& [
                  handle,
                  astProperties,
@@ -252,11 +255,57 @@ namespace lilac::cxx
             auto& ast = handle->getASTContext();
             auto type = ast.getTypeDeclType(handle);
 
-            const auto ptr = static_cast<ResolvedType*>(types[type].get());
+            const auto ptr = static_cast<ResolvedType*>(types[type].get()); // NOLINT(*-pro-type-static-cast-downcast)
 
             ptr->getMethods()    = methods;
             ptr->getProperties() = properties;
         }
+#pragma endregion
+
+#pragma region enums
+        std::vector<EnumType> enums;
+        enums.reserve(info.Enums.size());
+        for (const auto& [handle, constantDecls]: info.Enums)
+        {
+            const auto type     = handle->getIntegerType();
+            const bool isSigned = handle->getIntegerType()->isSignedIntegerType();
+
+            std::vector<EnumConstant> constants;
+            constants.reserve(constantDecls.size());
+            for (const auto constant: constantDecls)
+            {
+                auto value = constant->getValue();
+                if (value.getBitWidth() > 64)
+                {
+                    llvm::errs()
+                        << "A constant '" << constant->getName()
+                        << "' in '" << handle->getName()
+                        << "' has too big to process";
+                    break;
+                }
+
+                if (isSigned)
+                {
+                    constants.emplace_back(
+                        constant->getNameAsString(),
+                        value.getSExtValue()
+                    );
+                }
+                else
+                {
+                    constants.emplace_back(
+                        constant->getNameAsString(),
+                        value.getZExtValue()
+                    );
+                }
+            }
+
+            enums.emplace_back(
+                handle->getNameAsString(),
+                GetType(type, types),
+                constants);
+        }
+#pragma endregion
 
         // TODO: Serialize Records
     }
