@@ -34,7 +34,7 @@ namespace lilac
         ConstantVector m_Constants;
 
     public:
-        EnumType(std::string name, const Type& type, std::initializer_list<EnumConstant> constants);
+        EnumType(std::string name, std::shared_ptr<Type> type, std::vector<EnumConstant> constants);
 
         [[nodiscard]]
         const std::string& getName() const;

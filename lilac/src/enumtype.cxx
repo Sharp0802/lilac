@@ -16,11 +16,11 @@ namespace lilac
 
     EnumType::EnumType(
         std::string name,
-        const Type& type,
-        std::initializer_list<EnumConstant> constants)
-        : Type(LLType_Enum, {}, type),
+        std::shared_ptr<Type> type,
+        std::vector<EnumConstant> constants)
+        : Type(LLType_Enum, {}, std::move(type)),
           m_Name(std::move(name)),
-          m_Constants(constants)
+          m_Constants(std::move(constants))
     {
     }
 
