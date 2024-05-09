@@ -1,0 +1,6 @@
+#ifndef LILAC_H
+#define LILAC_H
+
+${INCLUDES}
+
+#endif //LILAC_H
