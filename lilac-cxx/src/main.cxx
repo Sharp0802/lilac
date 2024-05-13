@@ -52,19 +52,22 @@ int main(int argc, const char* argv[])
     llvm::cl::HideUnrelatedOptions(s_IHCategory);
     llvm::cl::ParseCommandLineOptions(argc, argv);
 
-    std::string error;
-    const std::shared_ptr cd = clang::tooling::JSONCompilationDatabase::loadFromFile(
-        s_IHCompileCommands,
-        error,
-        clang::tooling::JSONCommandLineSyntax::AutoDetect);
-    if (!cd)
+    if (s_IH)
     {
-        llvm::errs() << error << '\n';
-        return 1;
+        std::string error;
+        const std::shared_ptr cd = clang::tooling::JSONCompilationDatabase::loadFromFile(
+            s_IHCompileCommands,
+            error,
+            clang::tooling::JSONCommandLineSyntax::AutoDetect);
+        if (!cd)
+        {
+            llvm::errs() << error << '\n';
+            return 1;
+        }
+
+        clang::tooling::ClangTool tool(*cd, s_IHSources);
+
+        const auto factory = std::make_unique<lilac::cxx::FrontendActionFactory>(s_IHOut);
+        return tool.run(factory.get());
     }
-
-    clang::tooling::ClangTool tool(*cd, s_IHSources);
-
-    const auto factory = std::make_unique<lilac::cxx::FrontendActionFactory>();
-    return tool.run(factory.get());
 }

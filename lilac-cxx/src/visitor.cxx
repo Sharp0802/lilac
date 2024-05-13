@@ -1,4 +1,8 @@
+#include <utility>
+
 #include "visitor.h"
+
+#include <fstream>
 
 #include "cxxrecordvisitor.h"
 #include "enumvisitor.h"
@@ -107,22 +111,42 @@ namespace lilac::cxx
 
     // ReSharper restore CppMemberFunctionMayBeStatic
 
+    ASTConsumer::ASTConsumer(std::string out) : m_Out(std::move(out))
+    {
+    }
+
     void ASTConsumer::HandleTranslationUnit(clang::ASTContext& ctx)
     {
         ASTVisitor visitor{};
         visitor.TraverseTranslationUnitDecl(ctx.getTranslationUnitDecl());
-        llvm::outs() << visitor.GetHierarchy().ToString() << '\n';
+
+        std::ofstream ofs(m_Out);
+        if (ofs.bad())
+        {
+            llvm::errs() << "Couldn't open file '" << m_Out << "'.";
+            return;
+        }
+
+        ofs << visitor.GetHierarchy().ToString();
     }
 
     std::unique_ptr<clang::ASTConsumer> ASTFrontendAction::CreateASTConsumer(
         clang::CompilerInstance&,
         llvm::StringRef)
     {
-        return std::make_unique<ASTConsumer>();
+        return std::make_unique<ASTConsumer>(m_Out);
+    }
+
+    ASTFrontendAction::ASTFrontendAction(std::string out) : m_Out(std::move(out))
+    {
     }
 
     std::unique_ptr<clang::FrontendAction> FrontendActionFactory::create()
     {
-        return std::make_unique<ASTFrontendAction>();
+        return std::make_unique<ASTFrontendAction>(m_Out);
+    }
+
+    FrontendActionFactory::FrontendActionFactory(std::string out) : m_Out(std::move(out))
+    {
     }
 }
