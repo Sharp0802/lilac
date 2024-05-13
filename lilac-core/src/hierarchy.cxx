@@ -15,12 +15,12 @@ namespace lilac::core
 
     void Hierarchy::ToString(std::stringstream& ss, const std::size_t indent) const
     {
-        std::string indents(indent, '\t');
+        const std::string indents(indent, '\t');
 
         ss << indents << Kind << ',' << Name << ',' << ActualName;
         if (Kind == HOK_Constant)
         {
-            ss << ',' << Constant.Signed << ',';
+            ss << ',' << Constant.Signed << ',' << Constant.Size << ',';
             if (Constant.Signed)
                 ss << Constant.ConstantSigned;
             else

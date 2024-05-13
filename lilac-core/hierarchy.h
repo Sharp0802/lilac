@@ -25,6 +25,7 @@ namespace lilac::core
     struct ConstantData
     {
         bool Signed;
+        uint8_t Size;
         union
         {
             uint64_t ConstantUnsigned;

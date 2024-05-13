@@ -6,7 +6,11 @@ namespace lilac::cxx
         : m_Decl(decl),
           m_Hierarchy(core::HOK_Type, decl->getNameAsString(), decl->getNameAsString())
     {
-        m_Hierarchy.Constant.Signed = decl->getIntegerType()->isSignedIntegerType();
+        const auto type = decl->getIntegerType();
+        const auto size = decl->getASTContext().getTypeSize(type) / 8;
+
+        m_Hierarchy.Constant.Signed = type->isSignedIntegerType();
+        m_Hierarchy.Constant.Size = size;
     }
 
     bool Visitor<clang::EnumDecl>::VisitEnumConstantDecl(clang::EnumConstantDecl* decl)
@@ -16,7 +20,8 @@ namespace lilac::cxx
             decl->getNameAsString(),
             decl->getNameAsString()
         };
-        if ((h.Constant.Signed = m_Hierarchy.Constant.Signed))
+        h.Constant = m_Hierarchy.Constant;
+        if (h.Constant.Signed)
             h.Constant.ConstantSigned = decl->getValue().getSExtValue();
         else
             h.Constant.ConstantUnsigned = decl->getValue().getZExtValue();
