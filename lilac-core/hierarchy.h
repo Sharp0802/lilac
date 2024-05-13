@@ -59,5 +59,7 @@ namespace lilac::core
         bool operator!=(const Hierarchy&) const;
 
         bool operator<(const Hierarchy&) const;
+
+        static Hierarchy CreateFromFile(const std::string& path);
     };
 }
