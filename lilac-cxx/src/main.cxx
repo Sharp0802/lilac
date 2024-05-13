@@ -1,49 +1,70 @@
-
 #include <llvm/Support/CommandLine.h>
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
-#include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/Frontend/CompilerInstance.h>
+#include <clang/Tooling/JSONCompilationDatabase.h>
 
 #include "visitor.h"
+#include "version.h"
 
-static llvm::cl::OptionCategory s_Category{
-    "lilac-cxx",
-    "C++ interoperability layer compiler"
-};
+namespace
+{
+    llvm::cl::OptionCategory s_IHCategory{
+        "IH Compile Options"
+    };
+
+    llvm::cl::SubCommand s_IH{
+        "ih",
+        "Compile IH (Intermediate Hierarchy)"
+    };
+
+    llvm::cl::opt<std::string> s_IHOut{
+        llvm::cl::Positional,
+        llvm::cl::desc("<output>"),
+        llvm::cl::sub(s_IH),
+        llvm::cl::cat(s_IHCategory),
+        llvm::cl::Required
+    };
+
+    llvm::cl::list<std::string> s_IHSources{
+        llvm::cl::ConsumeAfter,
+        llvm::cl::desc("<source>..."),
+        llvm::cl::sub(s_IH),
+        llvm::cl::cat(s_IHCategory)
+    };
+
+    llvm::cl::opt<std::string> s_IHCompileCommands{
+        "c",
+        llvm::cl::desc("Specify json compile-commands"),
+        llvm::cl::sub(s_IH),
+        llvm::cl::cat(s_IHCategory),
+        llvm::cl::Required,
+        llvm::cl::ValueRequired
+    };
+}
 
 int main(int argc, const char* argv[])
 {
-    if (argc < 2)
-    {
-        llvm::errs() << "Insufficient arguments\n";
-        return -1;
-    }
-
-    if (strcmp(argv[1], "ihr") == 0)
     llvm::cl::SetVersionPrinter([](llvm::raw_ostream& os)
     {
-        argc--;
-        auto parser = clang::tooling::CommonOptionsParser::create(argc, argv + 1, s_Category);
-        if (auto error = parser.takeError())
-        {
-            llvm::errs() << toString(std::move(error)) << '\n';
-            return -1;
-        }
         os << "lilac-cxx " VERSION " " TIMESTAMP "\n";
     });
+    llvm::cl::HideUnrelatedOptions(s_IHCategory);
+    llvm::cl::ParseCommandLineOptions(argc, argv);
 
-        clang::tooling::ClangTool tool(parser->getCompilations(), parser->getSourcePathList());
-
-        const auto factory = std::make_unique<lilac::cxx::FrontendActionFactory>();
-        return tool.run(factory.get());
-    }
-    if (strcmp(argv[1], "br") == 0)
+    std::string error;
+    const std::shared_ptr cd = clang::tooling::JSONCompilationDatabase::loadFromFile(
+        s_IHCompileCommands,
+        error,
+        clang::tooling::JSONCommandLineSyntax::AutoDetect);
+    if (!cd)
     {
-        // TODO : C++ Backend
-        llvm::errs() << "Backend compiling for C++ is not supported yet.\n";
-        return -1;
+        llvm::errs() << error << '\n';
+        return 1;
     }
 
-    llvm::errs() << "Unrecognized subcommand '" << argv[1] << "'.\n";
-    return -1;
+    clang::tooling::ClangTool tool(*cd, s_IHSources);
+
+    const auto factory = std::make_unique<lilac::cxx::FrontendActionFactory>();
+    return tool.run(factory.get());
 }
