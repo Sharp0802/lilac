@@ -20,7 +20,7 @@ namespace lilac::core
         ss << indents << Kind << ',' << Name << ',' << ActualName;
         if (Kind == HOK_Constant)
         {
-            ss << ',' << Constant.Signed << ',' << Constant.Size << ',';
+            ss << ',' << Constant.Signed << ',' << static_cast<int>(Constant.Size) << ',';
             if (Constant.Signed)
                 ss << Constant.ConstantSigned;
             else
