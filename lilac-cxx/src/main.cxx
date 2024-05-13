@@ -20,6 +20,7 @@ int main(int argc, const char* argv[])
     }
 
     if (strcmp(argv[1], "ihr") == 0)
+    llvm::cl::SetVersionPrinter([](llvm::raw_ostream& os)
     {
         argc--;
         auto parser = clang::tooling::CommonOptionsParser::create(argc, argv + 1, s_Category);
@@ -28,6 +29,8 @@ int main(int argc, const char* argv[])
             llvm::errs() << toString(std::move(error)) << '\n';
             return -1;
         }
+        os << "lilac-cxx " VERSION " " TIMESTAMP "\n";
+    });
 
         clang::tooling::ClangTool tool(parser->getCompilations(), parser->getSourcePathList());
 
