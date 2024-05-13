@@ -20,109 +20,66 @@ But, with power of LLVM, we hope that LILAC will generate bindings between C++ a
 
 ## Infrastructure
 
+LILAC Infrastructure consists of
+LLVM IR (Intermediate Representation) and 
+LILAC IHR (Intermediate Hierarchy Representation)
+
 ```mermaid
 flowchart LR
-    Input --> Frontend(Frontend)
+    Input --> IR
+    Input --> Hierarchy[IHR]
 
-    Frontend --> Runtime[Marshal Runtime]
-    Frontend --> Interface[Interface Model]
+    IR --> Bridge
+    Hierarchy --> Bridge
 
-    Interface --> Backend(Backend)
-    Backend --> Bridge[Bridge Library]
+    subgraph Frontend
+        Hierarchy
+    end
 
-    subgraph Output
-        Runtime
+    subgraph Backend
         Bridge
+    end
+
+    subgraph LLVM
+        IR
     end
 
     subgraph LILAC
         Frontend
-        Output
-        Interface
         Backend
     end
 
-    Runtime --> Host[Host Program]
     Bridge --> Host
 ```
 
 For example:
 
-### Building
-
 ```mermaid
 flowchart LR
-    Input[C++ Library] -->  Runtime["Marshal Runtime (Native)"]
-    Input --> Interface[Interface Model]
+    Input --> Binary["Native Library (*.so/*.dll)"]
+    Input[C++ Library] --> IR
+    Input --> Hierarchy[IHR]
 
-    Interface --> Bridge["Bridge Library (MSIL)"]
+    IR --> Bridge
+    Hierarchy --> Bridge["MSIL Bridge (*.dll)"]
+    Binary -. P/Invoke .-> Bridge
 
-    subgraph Output
-        Runtime
+    subgraph Frontend
+        Hierarchy
+    end
+
+    subgraph Backend
         Bridge
     end
 
-    subgraph LILAC
-        Output
-        Interface
-    end
-
-    Runtime --> Host[C# Program]
-    Bridge --> Host
-```
-
-### Runtime
-
-```mermaid
-flowchart LR
-    Host[C# Program] --> Bridge["Bridge Library (MSIL)"]
-    Bridge --> Marshal["Marshal Runtime (Native)"]
-    Bridge --> Library["C++ Library"]
-    Marshal --> Library
-
-    subgraph LILAC
-        Bridge
-        Marshal
-    end
-```
-
-In this case,
-Frontend will be output thin marshalling library
-to convert built-in type to type used in C++.
-This is why bridge library can be generated
-from only abstract interface model.
-
-When A function in bridge library invoked,
-Bridge library automatically handles function-call
-with a marshal runtime generated with the frontend.
-
-But, when C++ is host:
-
-```mermaid
-flowchart LR
-    Input[C# Library] -->  Runtime["Marshal Runtime (MSIL)"]
-    Input --> Interface[Interface Model]
-
-    Interface --> Bridge["Bridge Library/Headers (Native)"]
-
-    subgraph Output
-        Runtime
-        Bridge
+    subgraph LLVM
+        IR
     end
 
     subgraph LILAC
-        Output
-        Interface
+        Frontend
+        Backend
     end
 
-    Runtime --> Host[C++ Program]
-    Bridge --> Host
+    Bridge -- Reference --> Host[C# Program]
 ```
-
-In this case,
-`hostfxr` with other marshalling libraries will be output
-because .NET should be hosted by C++.
-
-## Interface Model
-
-![](docs/InterfaceModel.svg)
