@@ -38,7 +38,7 @@ namespace
         llvm::cl::desc("Specify json compile-commands"),
         llvm::cl::sub(s_IH),
         llvm::cl::cat(s_IHCategory),
-        llvm::cl::Required,
+        llvm::cl::init("compile_commands.json"),
         llvm::cl::ValueRequired
     };
 }
