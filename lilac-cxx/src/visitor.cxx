@@ -1,9 +1,4 @@
-#include <utility>
-
 #include "visitor.h"
-
-#include <fstream>
-
 #include "cxxrecordvisitor.h"
 #include "enumvisitor.h"
 #include "functionvisitor.h"

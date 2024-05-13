@@ -1,9 +1,4 @@
-#include <llvm/Support/CommandLine.h>
-#include <clang/Tooling/CommonOptionsParser.h>
-#include <clang/Tooling/Tooling.h>
-#include <clang/Frontend/CompilerInstance.h>
-#include <clang/Tooling/JSONCompilationDatabase.h>
-
+#include "pch.h"
 #include "visitor.h"
 #include "version.h"
 

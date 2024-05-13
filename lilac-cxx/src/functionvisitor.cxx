@@ -1,5 +1,3 @@
-#include <clang/AST/Mangle.h>
-
 #include "functionvisitor.h"
 
 namespace lilac::cxx

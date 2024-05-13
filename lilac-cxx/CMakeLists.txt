@@ -12,6 +12,11 @@ add_executable(
         ${SOURCES}
         ${HEADERS}
 )
+target_precompile_headers(
+        lilac-cxx
+        PRIVATE
+        pch.h
+)
 target_include_directories(
         lilac-cxx
         PRIVATE

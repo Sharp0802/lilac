@@ -1,7 +1,6 @@
 #pragma once
 
-#include <clang/AST/RecursiveASTVisitor.h>
-
+#include "pch.h"
 #include "visitor.h"
 #include "lilac-core/hierarchy.h"
 

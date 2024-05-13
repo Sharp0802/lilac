@@ -1,5 +1,3 @@
-#include <clang/AST/Mangle.h>
-
 #include "cxxrecordvisitor.h"
 #include "functionvisitor.h"
 
