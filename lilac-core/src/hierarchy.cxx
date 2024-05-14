@@ -1,13 +1,11 @@
-#include <utility>
-#include <sstream>
+#include "hierarchy.h"
+
+#include <algorithm>
 #include <fstream>
 #include <memory>
+#include <sstream>
 #include <stack>
 #include <vector>
-#include <ranges>
-#include <algorithm>
-
-#include "hierarchy.h"
 
 namespace lilac::core
 {
@@ -24,13 +22,27 @@ namespace lilac::core
         const std::string indents(indent, '\t');
 
         ss << indents << Kind << ',' << Name << ',' << ActualName;
-        if (Kind == HOK_Constant)
+        switch (Kind)
         {
-            ss << ',' << Constant.Signed << ',' << static_cast<int>(Constant.Size) << ',';
-            if (Constant.Signed)
-                ss << Constant.ConstantSigned;
-            else
-                ss << Constant.ConstantUnsigned;
+            case HOK_Constant:
+                ss << ',' << GetConstantData().Signed << ',' << static_cast<int>(GetConstantData().Size) << ',';
+                if (GetConstantData().Signed)
+                    ss << GetConstantData().ConstantSigned;
+                else
+                    ss << GetConstantData().ConstantUnsigned;
+                break;
+
+            case HOK_Function:
+            case HOK_Method:
+                ss << ',' << GetFunctionData().Type;
+                break;
+
+            case HOK_Parameter:
+                ss << ',' << GetParameterData().Index << ',' << GetParameterData().Type << ',' << static_cast<uint32_t>(GetParameterData().Flags);
+                break;
+
+            default:
+                break;
         }
 
         ss << '\n';
@@ -39,12 +51,57 @@ namespace lilac::core
             member.ToString(ss, indent + 1);
     }
 
+    ConstantData& Hierarchy::GetConstantData()
+    {
+        return std::get<ConstantData>(Trailer);
+    }
+
+    FunctionData& Hierarchy::GetFunctionData()
+    {
+        return std::get<FunctionData>(Trailer);
+    }
+
+    ParameterData& Hierarchy::GetParameterData()
+    {
+        return std::get<ParameterData>(Trailer);
+    }
+
+    const ConstantData& Hierarchy::GetConstantData() const
+    {
+        return std::get<ConstantData>(Trailer);
+    }
+
+    const FunctionData& Hierarchy::GetFunctionData() const
+    {
+        return std::get<FunctionData>(Trailer);
+    }
+
+    const ParameterData& Hierarchy::GetParameterData() const
+    {
+        return std::get<ParameterData>(Trailer);
+    }
+
     Hierarchy::Hierarchy(const HierarchyKind kind, std::string actualName, std::string name)
         : ActualName(std::move(actualName)),
           Name(std::move(name)),
-          Kind(kind),
-          Constant()
+          Kind(kind)
     {
+        switch (Kind)
+        {
+            case HOK_Constant:
+                Trailer = ConstantData();
+                break;
+            case HOK_Function:
+            case HOK_Method:
+                Trailer = FunctionData();
+                break;
+            case HOK_Parameter:
+                Trailer = ParameterData();
+                break;
+
+            default:
+                break;
+        }
     }
 
     std::string Hierarchy::ToString() const
@@ -78,13 +135,15 @@ namespace lilac::core
         std::stack<Hierarchy*> stack;
         stack.push(root.get());
 
-        Hierarchy* previous = nullptr;
-        size_t previousIndent = 0;
+        Hierarchy* previous       = nullptr;
+        size_t     previousIndent = 0;
 
         for (std::string token; std::getline(ifs, token);)
         {
             size_t indent = 0;
-            for (; token[indent] == '\t'; indent++) {}
+            for (; token[indent] == '\t'; indent++)
+            {
+            }
 
             if (indent > previousIndent)
             {
@@ -93,7 +152,8 @@ namespace lilac::core
             }
             else if (indent < previousIndent)
             {
-                stack.pop();
+                for (auto i = previousIndent; i < indent; ++i)
+                    stack.pop();
                 previousIndent = indent;
             }
 
@@ -104,8 +164,8 @@ namespace lilac::core
             while (std::getline(ss, token, ','))
                 tokens.push_back(token);
 
-            auto kind = static_cast<HierarchyKind>(std::stoi(tokens[0]));
-            auto name = tokens[1];
+            auto kind   = static_cast<HierarchyKind>(std::stoi(tokens[0]));
+            auto name   = tokens[1];
             auto actual = tokens[2];
 
             if (kind == HOK_Root)
@@ -117,22 +177,31 @@ namespace lilac::core
             switch (kind)
             {
                 case HOK_Constant:
-                {
-                    h.Constant.Signed = std::stoi(tokens[DataOffset]);
-                    h.Constant.Size = std::stoi(tokens[DataOffset + 1]);
-                    if (h.Constant.Signed)
-                        h.Constant.ConstantSigned = std::stoll(tokens[DataOffset + 2]);
+                    h.GetConstantData().Signed = std::stoi(tokens[DataOffset]);
+                    h.GetConstantData().Size = std::stoi(tokens[DataOffset + 1]);
+                    if (h.GetConstantData().Signed)
+                        h.GetConstantData().ConstantSigned = std::stoll(tokens[DataOffset + 2]);
                     else
-                        h.Constant.ConstantUnsigned = std::stoull(tokens[DataOffset + 2]);
+                        h.GetConstantData().ConstantUnsigned = std::stoull(tokens[DataOffset + 2]);
                     break;
-                }
+
+                case HOK_Function:
+                case HOK_Method:
+                    h.GetFunctionData().Type = tokens[DataOffset];
+                    break;
+
+                case HOK_Parameter:
+                    h.GetParameterData().Index = std::stoull(tokens[DataOffset]);
+                    h.GetParameterData().Type  = tokens[DataOffset + 1];
+                    h.GetParameterData().Flags = std::stoul(tokens[DataOffset + 2]);
+                    break;
 
                 default:
                     break;
             }
 
             auto [iter, _] = stack.top()->Members.emplace(h);
-            previous = const_cast<Hierarchy*>(&*iter);
+            previous       = const_cast<Hierarchy*>(&*iter);
         }
 
         return *root;
