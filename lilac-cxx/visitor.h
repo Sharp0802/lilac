@@ -9,6 +9,10 @@ namespace lilac::cxx
 
     bool IsExported(const clang::FunctionDecl* decl);
 
+    const clang::Type* DesugarType(const clang::Type* t);
+
+    std::optional<std::string> GetTypeString(const clang::Type* type, const clang::ASTContext& context);
+
     std::string GetActualName(const clang::CXXRecordDecl* decl);
 
     template<typename T>

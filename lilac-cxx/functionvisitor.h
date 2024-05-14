@@ -8,6 +8,8 @@ namespace lilac::cxx
 {
     std::string GetActualName(const clang::FunctionDecl* decl);
 
+    void ResolveFunctionIntoHierarchy(core::Hierarchy& h, clang::FunctionDecl* decl);
+
     template<>
     class Visitor<clang::FunctionDecl> : public clang::RecursiveASTVisitor<Visitor<clang::FunctionDecl>>
     {

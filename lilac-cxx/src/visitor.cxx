@@ -17,6 +17,85 @@ namespace lilac::cxx
             decl->getAccess() == clang::AS_public;
     }
 
+    const clang::Type* DesugarType(const clang::Type* t)
+    {
+        if (t->isDecltypeType())
+        {
+            const auto* declT = clang::cast<clang::DecltypeType>(t);
+            t                 = declT->getUnderlyingType().getTypePtr();
+        }
+
+        return t;
+    }
+
+    std::optional<std::string> GetTypeString(const clang::Type* type, const clang::ASTContext& context)
+    {
+        type = DesugarType(type);
+
+        auto ref = 0;
+        for (;
+            type->isPointerType() || type->isReferenceType();
+            ref++, type = DesugarType(type->getPointeeType().getTypePtr()))
+        {
+        }
+
+        std::stringstream ss;
+        if (type->isBuiltinType())
+        {
+            using Kind = clang::BuiltinType::Kind;
+
+            static std::map<clang::BuiltinType::Kind, std::string> s_TypeMap = {
+                { Kind::Char8, core::UTF8Ty },
+                { Kind::Char16, core::UTF16Ty },
+                { Kind::Char32, core::UTF32Ty },
+
+                { Kind::Float16, core::FP16Ty },
+                { Kind::Float, core::FP32Ty },
+                { Kind::Double, core::FP64Ty },
+
+                { Kind::SChar, core::S8Ty },
+                { Kind::Short, core::S16Ty },
+                { Kind::Int, core::S32Ty },
+                { Kind::LongLong, core::S64Ty },
+
+                { Kind::UChar, core::U8Ty },
+                { Kind::UShort, core::U16Ty },
+                { Kind::UInt, core::U32Ty },
+                { Kind::ULongLong, core::U64Ty },
+
+                { Kind::Void, core::VoidTy },
+                { Kind::Bool, core::BoolTy }
+            };
+
+            const auto builtin = clang::cast<clang::BuiltinType>(type);
+            const auto kind    = builtin->getKind();
+
+            if (kind == Kind::Long || kind == Kind::ULong)
+            {
+                llvm::errs() << "`long' nor `unsigned long' cannot be used; type is platform-dependant\n";
+                return std::nullopt;
+            }
+
+            if (!s_TypeMap.contains(kind))
+            {
+                const clang::PrintingPolicy policy(context.getLangOpts());
+                llvm::errs() << "Unrecognized type `" << builtin->getNameAsCString(policy) << "' detected.\n";
+                return std::nullopt;
+            }
+
+            ss << s_TypeMap[kind];
+        }
+        else
+        {
+            const auto record = type->getAsCXXRecordDecl();
+            ss << GetActualName(record);
+        }
+        for (auto i = 0; i < ref; ++i)
+            ss << '*';
+
+        return ss.str();
+    }
+
     std::string GetActualName(const clang::CXXRecordDecl* decl)
     {
         std::stack<std::string> ns;
