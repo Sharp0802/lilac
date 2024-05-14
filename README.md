@@ -1,5 +1,9 @@
 # Welcome to LILAC
 
+![](https://img.shields.io/github/license/Sharp0802/lilac)
+![](https://img.shields.io/github/repo-size/Sharp0802/lilac)
+![](https://img.shields.io/github/commit-activity/m/Sharp0802/lilac)
+
 > [!IMPORTANT]
 > ***WORKING IN PROGRESS***
 
