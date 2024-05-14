@@ -3,25 +3,6 @@
 
 namespace lilac::cxx
 {
-    std::string GetActualName(const clang::CXXRecordDecl* decl)
-    {
-        std::stack<std::string> ns;
-        for (auto parent = decl->getParent(); !parent->isTranslationUnit(); parent = parent->getParent())
-            ns.push(llvm::cast<clang::NamespaceDecl>(parent)->getName().str());
-        std::stringstream ss;
-        while (!ns.empty())
-        {
-            ss << ns.top() << "::";
-            ns.pop();
-        }
-
-        return std::format(
-            "{}.{}{}",
-            decl->isStruct() ? "struct" : "class",
-            ss.str(),
-            decl->getName().str());
-    }
-
     Visitor<clang::CXXRecordDecl>::Visitor(clang::CXXRecordDecl* decl)
         : m_Decl(decl),
           m_Hierarchy(core::HOK_Type, GetActualName(decl), decl->getName().str())
@@ -96,11 +77,15 @@ namespace lilac::cxx
     {
         if (decl->getIdentifier() && IsExported(decl))
         {
-            m_Methods.push_back(decl);
-            m_Hierarchy.Members.emplace(
+            core::Hierarchy h{
                 decl->isStatic() ? core::HOK_Function : core::HOK_Method,
                 GetActualName(decl),
-                decl->getNameAsString());
+                decl->getNameAsString()
+            };
+            ResolveFunctionIntoHierarchy(h, decl);
+
+            m_Methods.push_back(decl);
+            m_Hierarchy.Members.emplace(h);
         }
         return true;
     }

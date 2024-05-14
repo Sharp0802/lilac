@@ -17,6 +17,25 @@ namespace lilac::cxx
             decl->getAccess() == clang::AS_public;
     }
 
+    std::string GetActualName(const clang::CXXRecordDecl* decl)
+    {
+        std::stack<std::string> ns;
+        for (auto parent = decl->getParent(); !parent->isTranslationUnit(); parent = parent->getParent())
+            ns.push(llvm::cast<clang::NamespaceDecl>(parent)->getName().str());
+        std::stringstream ss;
+        while (!ns.empty())
+        {
+            ss << ns.top() << "::";
+            ns.pop();
+        }
+
+        return std::format(
+            "{}.{}{}",
+            decl->isStruct() ? "struct" : "class",
+            ss.str(),
+            decl->getName().str());
+    }
+
     ASTVisitor::ASTVisitor(): m_Hierarchy(core::HOK_Root, "%root", "%root")
     {
     }

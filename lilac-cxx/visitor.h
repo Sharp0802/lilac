@@ -9,6 +9,8 @@ namespace lilac::cxx
 
     bool IsExported(const clang::FunctionDecl* decl);
 
+    std::string GetActualName(const clang::CXXRecordDecl* decl);
+
     template<typename T>
     class Visitor;
 
