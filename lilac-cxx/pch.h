@@ -12,5 +12,12 @@
 #include <clang/Tooling/JSONCompilationDatabase.h>
 #include <llvm/Support/CommandLine.h>
 
+#include <algorithm>
 #include <fstream>
 #include <utility>
+#include <memory>
+#include <ranges>
+#include <sstream>
+#include <stack>
+#include <variant>
+#include <vector>
