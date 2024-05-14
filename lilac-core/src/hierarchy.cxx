@@ -152,7 +152,7 @@ namespace lilac::core
             }
             else if (indent < previousIndent)
             {
-                for (auto i = previousIndent; i < indent; ++i)
+                for (auto i = indent; i < previousIndent; ++i)
                     stack.pop();
                 previousIndent = indent;
             }
