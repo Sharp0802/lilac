@@ -2,9 +2,27 @@
 
 namespace lilac::cxx
 {
+    std::string GetActualName(const clang::EnumDecl* decl)
+    {
+        std::stack<std::string> ns;
+        for (auto parent = decl->getParent(); !parent->isTranslationUnit(); parent = parent->getParent())
+            ns.push(llvm::cast<clang::NamespaceDecl>(parent)->getName().str());
+        std::stringstream ss;
+        while (!ns.empty())
+        {
+            ss << ns.top() << "::";
+            ns.pop();
+        }
+
+        return std::format(
+            "enum.{}{}",
+            ss.str(),
+            decl->getName().str());
+    }
+
     Visitor<clang::EnumDecl>::Visitor(clang::EnumDecl* decl)
         : m_Decl(decl),
-          m_Hierarchy(core::HOK_Type, decl->getNameAsString(), decl->getNameAsString())
+          m_Hierarchy(core::HOK_Type, GetActualName(decl), decl->getNameAsString())
     {
         const auto type = decl->getIntegerType();
         const auto size = decl->getASTContext().getTypeSize(type) / 8;
