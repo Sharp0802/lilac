@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <set>
 #include <string>
 #include <variant>
@@ -126,6 +127,6 @@ namespace lilac::core
 
         bool operator<(const Hierarchy&) const;
 
-        static Hierarchy CreateFromFile(const std::string& path);
+        static std::optional<Hierarchy> CreateFromFile(const std::string& path);
     };
 }

@@ -6,6 +6,7 @@
 #include <sstream>
 #include <stack>
 #include <vector>
+#include <llvm/Support/raw_ostream.h>
 
 namespace lilac::core
 {
@@ -126,7 +127,7 @@ namespace lilac::core
         return ActualName < obj.ActualName;
     }
 
-    Hierarchy Hierarchy::CreateFromFile(const std::string& path)
+    std::optional<Hierarchy> Hierarchy::CreateFromFile(const std::string& path)
     {
         std::ifstream ifs(path);
 
@@ -144,9 +145,16 @@ namespace lilac::core
             for (; token[indent] == '\t'; indent++)
             {
             }
+            token = token.erase(0, indent);
 
             if (indent > previousIndent)
             {
+                if (indent > previousIndent + 1)
+                {
+                    llvm::errs() << "Extranous indentation is not allowed. (line '" << token << "')\n";
+                    return std::nullopt;
+                }
+
                 stack.push(previous ? previous : root.get());
                 previousIndent = indent;
             }
@@ -160,7 +168,7 @@ namespace lilac::core
 
             std::vector<std::string> tokens;
             tokens.reserve(std::ranges::count(token, ',') + 1);
-            std::stringstream ss(token.erase(0, indent));
+            std::stringstream ss(token);
             while (std::getline(ss, token, ','))
                 tokens.push_back(token);
 
