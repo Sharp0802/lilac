@@ -120,6 +120,9 @@ namespace lilac::core
 
     public:
         [[nodiscard]]
+        Hierarchy* GetParent(Hierarchy& from);
+
+        [[nodiscard]]
         Hierarchy* QueryByActualName(const std::string& name);
 
         [[nodiscard]]

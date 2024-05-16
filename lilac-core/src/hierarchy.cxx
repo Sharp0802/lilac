@@ -65,6 +65,17 @@ namespace lilac::core
             const_cast<Hierarchy&>(member).QueryBy(p, v);
     }
 
+    Hierarchy* Hierarchy::GetParent(Hierarchy& from)
+    {
+        return from.FirstBy([this](auto h) -> bool
+        {
+            return std::ranges::any_of(h->Members, [&](const Hierarchy& fn)
+            {
+                return fn.ActualName == ActualName;
+            });
+        });
+    }
+
     Hierarchy* Hierarchy::QueryByActualName(const std::string& name)
     {
         if (ActualName == name)
