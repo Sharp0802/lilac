@@ -112,7 +112,7 @@ namespace lilac::core
         std::set<Hierarchy> Members;
 
     private:
-        std::variant<ConstantData, FunctionData, ParameterData> Trailer;
+        std::variant<ConstantData, FunctionData, ParameterData> m_Trailer;
 
     public:
         [[nodiscard]]

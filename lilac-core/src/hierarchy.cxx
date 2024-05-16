@@ -67,32 +67,32 @@ namespace lilac::core
 
     ConstantData& Hierarchy::GetConstantData()
     {
-        return std::get<ConstantData>(Trailer);
+        return std::get<ConstantData>(m_Trailer);
     }
 
     FunctionData& Hierarchy::GetFunctionData()
     {
-        return std::get<FunctionData>(Trailer);
+        return std::get<FunctionData>(m_Trailer);
     }
 
     ParameterData& Hierarchy::GetParameterData()
     {
-        return std::get<ParameterData>(Trailer);
+        return std::get<ParameterData>(m_Trailer);
     }
 
     const ConstantData& Hierarchy::GetConstantData() const
     {
-        return std::get<ConstantData>(Trailer);
+        return std::get<ConstantData>(m_Trailer);
     }
 
     const FunctionData& Hierarchy::GetFunctionData() const
     {
-        return std::get<FunctionData>(Trailer);
+        return std::get<FunctionData>(m_Trailer);
     }
 
     const ParameterData& Hierarchy::GetParameterData() const
     {
-        return std::get<ParameterData>(Trailer);
+        return std::get<ParameterData>(m_Trailer);
     }
 
     Hierarchy::Hierarchy(const HierarchyKind kind, std::string actualName, std::string name)
@@ -103,14 +103,14 @@ namespace lilac::core
         switch (Kind)
         {
             case HOK_Constant:
-                Trailer = ConstantData();
+                m_Trailer = ConstantData();
                 break;
             case HOK_Function:
             case HOK_Method:
-                Trailer = FunctionData();
+                m_Trailer = FunctionData();
                 break;
             case HOK_Parameter:
-                Trailer = ParameterData();
+                m_Trailer = ParameterData();
                 break;
 
             default:

@@ -56,8 +56,7 @@ namespace lilac::cxx
             return false;
         }
 
-        core::Hierarchy property
-        {
+        core::Hierarchy property{
             core::HOK_Property,
             decl->getNameAsString(),
             decl->getNameAsString()
