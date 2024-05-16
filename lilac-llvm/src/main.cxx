@@ -18,13 +18,15 @@ namespace
     llvm::cl::opt<std::string> s_IHSource{
         llvm::cl::Positional,
         llvm::cl::desc("<IH file>"),
-        llvm::cl::cat(s_Category)
+        llvm::cl::cat(s_Category),
+        llvm::cl::Required
     };
 
     llvm::cl::opt<std::string> s_IRSource{
         llvm::cl::Positional,
         llvm::cl::desc("<IR file>"),
-        llvm::cl::cat(s_Category)
+        llvm::cl::cat(s_Category),
+        llvm::cl::Required
     };
 }
 
