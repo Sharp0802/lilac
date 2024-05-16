@@ -101,6 +101,9 @@ namespace lilac::core
         std::variant<ConstantData, FunctionData, ParameterData> Trailer;
 
     public:
+        [[nodiscard]]
+        Hierarchy* QueryByActualName(const std::string& name);
+
         ConstantData& GetConstantData();
 
         FunctionData& GetFunctionData();

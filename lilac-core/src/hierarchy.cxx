@@ -52,6 +52,16 @@ namespace lilac::core
             member.ToString(ss, indent + 1);
     }
 
+    Hierarchy* Hierarchy::QueryByActualName(const std::string& name)
+    {
+        if (ActualName == name)
+            return this;
+        for (auto&         member: Members)
+            if (const auto h = const_cast<Hierarchy&>(member).QueryByActualName(name))
+                return h;
+        return nullptr;
+    }
+
     ConstantData& Hierarchy::GetConstantData()
     {
         return std::get<ConstantData>(Trailer);
