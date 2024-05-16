@@ -39,7 +39,10 @@ namespace lilac::core
                 break;
 
             case HOK_Parameter:
-                ss << ',' << GetParameterData().Index << ',' << GetParameterData().Type << ',' << static_cast<uint32_t>(GetParameterData().Flags);
+                ss
+                    << ',' << GetParameterData().Index
+                    << ',' << GetParameterData().Type
+                    << ',' << static_cast<uint32_t>(GetParameterData().Flags);
                 break;
 
             default:
