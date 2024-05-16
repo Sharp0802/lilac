@@ -6,6 +6,7 @@
 #include <sstream>
 #include <stack>
 #include <vector>
+#include <filesystem>
 #include <llvm/Support/raw_ostream.h>
 
 namespace lilac::core
@@ -143,6 +144,17 @@ namespace lilac::core
     std::optional<Hierarchy> Hierarchy::CreateFromFile(const std::string& path)
     {
         std::ifstream ifs(path);
+        if (!ifs)
+        {
+            llvm::errs()
+                << "Couldn't open file '" << path
+                << "'. (" << (std::filesystem::exists(path)
+                    ? "Possibly permission problem?"
+                    : "There is no such file")
+                << ")\n";
+
+            return std::nullopt;
+        }
 
         auto root = std::make_shared<Hierarchy>(HOK_Root, "%root", "%root");
 
