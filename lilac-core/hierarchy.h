@@ -33,6 +33,20 @@ namespace lilac::core
 
 #undef TYPESTR_DEF
 
+    constexpr std::string SRetName = "%sret";
+
+    constexpr bool IsBuiltinType(const std::string& type)
+    {
+        const std::set s_Set = {
+            VoidTy,
+            UTF8Ty, UTF16Ty, UTF32Ty,
+            FP16Ty, FP32Ty, FP64Ty,
+            S8Ty, S16Ty, S32Ty, S64Ty,
+            U8Ty, U16Ty, U32Ty, U64Ty
+        };
+        return s_Set.contains(type);
+    }
+
     enum HierarchyKind
     {
         HOK_Root,
@@ -64,7 +78,7 @@ namespace lilac::core
 
     struct ParameterData
     {
-        std::size_t Index;
+        ssize_t Index;
         std::string Type;
 
         union
