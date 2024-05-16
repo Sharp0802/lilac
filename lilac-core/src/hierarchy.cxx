@@ -5,6 +5,7 @@
 #include <memory>
 #include <sstream>
 #include <stack>
+#include <utility>
 #include <vector>
 #include <filesystem>
 #include <llvm/Support/raw_ostream.h>
@@ -79,6 +80,16 @@ namespace lilac::core
         std::vector<Hierarchy*> v;
         QueryBy(p, v);
         return v;
+    }
+
+    Hierarchy* Hierarchy::FirstBy(const std::function<bool(Hierarchy*)>& p)
+    {
+        if (p(this))
+            return this;
+        for (auto&         member: Members)
+            if (const auto h = const_cast<Hierarchy&>(member).FirstBy(p))
+                return h;
+        return nullptr;
     }
 
     ConstantData& Hierarchy::GetConstantData()

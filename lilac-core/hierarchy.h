@@ -125,6 +125,9 @@ namespace lilac::core
         [[nodiscard]]
         std::vector<Hierarchy*> QueryBy(const std::function<bool(Hierarchy*)>& p);
 
+        [[nodiscard]]
+        Hierarchy* FirstBy(const std::function<bool(Hierarchy*)>& p);
+
         ConstantData& GetConstantData();
 
         FunctionData& GetFunctionData();
