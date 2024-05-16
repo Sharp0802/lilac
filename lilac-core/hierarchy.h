@@ -1,10 +1,12 @@
 #pragma once
 
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <set>
 #include <string>
 #include <variant>
+#include <vector>
 
 namespace lilac::core
 {
@@ -104,6 +106,8 @@ namespace lilac::core
     private:
         void ToString(std::stringstream& ss, std::size_t indent) const;
 
+        void QueryBy(const std::function<bool(Hierarchy*)>& p, std::vector<Hierarchy*>& v);
+
     public:
         const std::string ActualName;
         const std::string Name;
@@ -117,6 +121,9 @@ namespace lilac::core
     public:
         [[nodiscard]]
         Hierarchy* QueryByActualName(const std::string& name);
+
+        [[nodiscard]]
+        std::vector<Hierarchy*> QueryBy(const std::function<bool(Hierarchy*)>& p);
 
         ConstantData& GetConstantData();
 

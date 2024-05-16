@@ -56,6 +56,14 @@ namespace lilac::core
             member.ToString(ss, indent + 1);
     }
 
+    void Hierarchy::QueryBy(const std::function<bool(Hierarchy*)>& p, std::vector<Hierarchy*>& v)
+    {
+        if (p(this))
+            v.push_back(this);
+        for (auto& member: Members)
+            const_cast<Hierarchy&>(member).QueryBy(p, v);
+    }
+
     Hierarchy* Hierarchy::QueryByActualName(const std::string& name)
     {
         if (ActualName == name)
@@ -64,6 +72,13 @@ namespace lilac::core
             if (const auto h = const_cast<Hierarchy&>(member).QueryByActualName(name))
                 return h;
         return nullptr;
+    }
+
+    std::vector<Hierarchy*> Hierarchy::QueryBy(const std::function<bool(Hierarchy*)>& p)
+    {
+        std::vector<Hierarchy*> v;
+        QueryBy(p, v);
+        return v;
     }
 
     ConstantData& Hierarchy::GetConstantData()
@@ -224,7 +239,7 @@ namespace lilac::core
                     break;
 
                 case HOK_Parameter:
-                    h.GetParameterData().Index = std::stoull(tokens[DataOffset]);
+                    h.GetParameterData().Index = std::stoll(tokens[DataOffset]);
                     h.GetParameterData().Type  = tokens[DataOffset + 1];
                     h.GetParameterData().Flags = std::stoul(tokens[DataOffset + 2]);
                     break;
