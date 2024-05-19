@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <functional>
-#include <optional>
+#include <memory>
 #include <set>
 #include <string>
 #include <variant>
@@ -116,11 +116,14 @@ namespace lilac::core
         std::set<Hierarchy> Members;
 
     private:
+        Hierarchy* m_ParentCache = nullptr;
         std::variant<ConstantData, FunctionData, ParameterData> m_Trailer;
 
     public:
+        void Bake();
+
         [[nodiscard]]
-        Hierarchy* GetParent(Hierarchy& from);
+        Hierarchy* GetParent() const;
 
         [[nodiscard]]
         Hierarchy* QueryByActualName(const std::string& name);
@@ -157,6 +160,6 @@ namespace lilac::core
 
         bool operator<(const Hierarchy&) const;
 
-        static std::optional<Hierarchy> CreateFromFile(const std::string& path);
+        static std::shared_ptr<Hierarchy> CreateFromFile(const std::string& path);
     };
 }

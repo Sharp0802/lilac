@@ -65,15 +65,28 @@ namespace lilac::core
             const_cast<Hierarchy&>(member).QueryBy(p, v);
     }
 
-    Hierarchy* Hierarchy::GetParent(Hierarchy& from)
+    void Hierarchy::Bake()
     {
-        return from.FirstBy([this](auto h) -> bool
+        std::deque<Hierarchy*> queue;
+        queue.emplace_front(this);
+
+        while (!queue.empty())
         {
-            return std::ranges::any_of(h->Members, [&](const Hierarchy& fn)
+            auto* current = queue.back();
+            queue.pop_back();
+
+            for (auto& cmember: current->Members)
             {
-                return fn.ActualName == ActualName;
-            });
-        });
+                auto& member = const_cast<Hierarchy&>(cmember);
+                member.m_ParentCache = current;
+                queue.emplace_front(&member);
+            }
+        }
+    }
+
+    Hierarchy* Hierarchy::GetParent() const
+    {
+        return m_ParentCache;
     }
 
     Hierarchy* Hierarchy::QueryByActualName(const std::string& name)
@@ -178,7 +191,7 @@ namespace lilac::core
         return ActualName < obj.ActualName;
     }
 
-    std::optional<Hierarchy> Hierarchy::CreateFromFile(const std::string& path)
+    std::shared_ptr<Hierarchy> Hierarchy::CreateFromFile(const std::string& path)
     {
         std::ifstream ifs(path);
         if (!ifs)
@@ -190,7 +203,7 @@ namespace lilac::core
                     : "There is no such file")
                 << ")\n";
 
-            return std::nullopt;
+            return nullptr;
         }
 
         auto root = std::make_shared<Hierarchy>(HOK_Root, "%root", "%root");
@@ -214,7 +227,7 @@ namespace lilac::core
                 if (indent > previousIndent + 1)
                 {
                     llvm::errs() << "Extranous indentation is not allowed. (line '" << token << "')\n";
-                    return std::nullopt;
+                    return nullptr;
                 }
 
                 stack.push(previous ? previous : root.get());
@@ -274,6 +287,8 @@ namespace lilac::core
             previous       = const_cast<Hierarchy*>(&*iter);
         }
 
-        return *root;
+        root->Bake();
+
+        return root;
     }
 }
