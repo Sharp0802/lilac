@@ -7,6 +7,8 @@ namespace lilac::cxx
 {
     bool IsExported(const clang::NamedDecl* decl);
 
+    bool IsExported(const clang::CXXMethodDecl* decl);
+
     bool IsExported(const clang::FunctionDecl* decl);
 
     const clang::Type* DesugarType(const clang::Type* t);

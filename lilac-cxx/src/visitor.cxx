@@ -10,11 +10,18 @@ namespace lilac::cxx
         return decl->getVisibility() == clang::DefaultVisibility;
     }
 
-    bool IsExported(const clang::FunctionDecl* decl)
+    bool IsExported(const clang::CXXMethodDecl* decl)
     {
         return
             IsExported(clang::cast<clang::NamedDecl>(decl)) &&
             decl->getAccess() == clang::AS_public;
+    }
+
+    bool IsExported(const clang::FunctionDecl* decl)
+    {
+        return
+            IsExported(clang::cast<clang::NamedDecl>(decl)) &&
+            (decl->getAccess() == clang::AS_none || decl->getAccess() == clang::AS_public);
     }
 
     const clang::Type* DesugarType(const clang::Type* t)
@@ -222,7 +229,9 @@ namespace lilac::cxx
 
     bool ASTVisitor::VisitFunctionDecl(clang::FunctionDecl* decl) // NOLINT(*-convert-member-functions-to-static)
     {
-        return cxx::VisitDecl(&m_Hierarchy, decl);
+        if (clang::isa<clang::CXXMethodDecl>(decl))
+            return true;
+        return cxx::VisitDecl<clang::FunctionDecl>(&m_Hierarchy, decl);
     }
 
     core::Hierarchy ASTVisitor::GetHierarchy() const
