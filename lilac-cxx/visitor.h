@@ -13,6 +13,8 @@ namespace lilac::cxx
 
     std::optional<std::string> GetTypeString(const clang::Type* type, const clang::ASTContext& context);
 
+    std::string GetActualName(const clang::TagDecl* decl);
+
     std::string GetActualName(const clang::CXXRecordDecl* decl);
 
     template<typename T>

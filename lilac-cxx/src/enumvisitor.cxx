@@ -22,7 +22,7 @@ namespace lilac::cxx
 
     Visitor<clang::EnumDecl>::Visitor(clang::EnumDecl* decl)
         : m_Decl(decl),
-          m_Hierarchy(core::HOK_Type, GetActualName(decl), decl->getNameAsString())
+          m_Hierarchy(core::HOK_Enum, GetActualName(decl), decl->getNameAsString())
     {
         const auto type = decl->getIntegerType();
         const auto size = decl->getASTContext().getTypeSize(type) / 8;

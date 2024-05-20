@@ -85,10 +85,19 @@ namespace lilac::cxx
 
             ss << s_TypeMap[kind];
         }
+        else if (const auto* record = type->getAsCXXRecordDecl())
+        {
+            ss << GetActualName(record);
+        }
+        else if (const auto* tag = type->getAsTagDecl(); tag && tag->isEnum())
+        {
+            ss << GetActualName(tag);
+        }
         else
         {
-            const auto record = type->getAsCXXRecordDecl();
-            ss << GetActualName(record);
+            type->dump(llvm::errs(), context);
+            llvm::errs() << "Couldn't recognize type above ^^^\n";
+            return std::nullopt;
         }
         for (auto i = 0; i < ref; ++i)
             ss << '*';
@@ -96,7 +105,7 @@ namespace lilac::cxx
         return ss.str();
     }
 
-    std::string GetActualName(const clang::CXXRecordDecl* decl)
+    std::string GetParentScope(const clang::DeclContext* decl)
     {
         std::stack<std::string> ns;
         for (auto parent = decl->getParent(); !parent->isTranslationUnit(); parent = parent->getParent())
@@ -107,11 +116,30 @@ namespace lilac::cxx
             ss << ns.top() << "::";
             ns.pop();
         }
+        return ss.str();
+    }
 
+    std::string GetActualName(const clang::TagDecl* decl)
+    {
+        if (!decl->isEnum())
+        {
+            decl->dump(llvm::errs());
+            llvm::errs() << "'Enum' tag-type only is supported; may lead to generate invalid IH!\n";
+            return "";
+        }
+
+        return std::format(
+            "enum.{}{}",
+            GetParentScope(decl),
+            decl->getName().str());
+    }
+
+    std::string GetActualName(const clang::CXXRecordDecl* decl)
+    {
         return std::format(
             "{}.{}{}",
             decl->isStruct() ? "struct" : "class",
-            ss.str(),
+            GetParentScope(decl),
             decl->getName().str());
     }
 

@@ -55,6 +55,7 @@ namespace lilac::core
         HOK_Namespace,
 
         HOK_Type,
+        HOK_Enum,
         HOK_Constant,
 
         HOK_Function,
