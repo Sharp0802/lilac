@@ -92,7 +92,7 @@ std::string GetDisplayNamespace(lilac::core::Hierarchy* h)
     return JoinString(stk.rbegin(), stk.rend(), ".");
 }
 
-std::string MangleTypeToCSharpRef(lilac::core::Hierarchy* root, std::string name)
+std::string MangleTypeToCSharpRef(lilac::core::Hierarchy* root, std::string name, bool native)
 {
     auto ref = 0;
     for (; ref < name.size(); ++ref)
@@ -135,6 +135,8 @@ std::string MangleTypeToCSharpRef(lilac::core::Hierarchy* root, std::string name
         name = GetDisplayNamespace(type);
         if (!name.empty())
             name += '.';
+        if (native && type->Kind != lilac::core::HOK_Enum)
+            name += "__Impl_";
         name += type->Name;
     }
 
@@ -158,7 +160,7 @@ std::string MangleFunctionToCSharpDecl(
     std::vector<std::string> paramNames;
     for (auto* param: params)
     {
-        auto type = MangleTypeToCSharpRef(root, param->GetParameterData().Type);
+        auto type = MangleTypeToCSharpRef(root, param->GetParameterData().Type, true);
         auto name = param->Name;
         if (name == lilac::core::SRetName)
         {
@@ -186,7 +188,7 @@ namespace {} {{
         parentName,
         libname,
         function->ActualName,
-        MangleTypeToCSharpRef(root, function->GetFunctionData().Type),
+        MangleTypeToCSharpRef(root, function->GetFunctionData().Type, true),
         MangleFunctionNameToCSharp(function->Name),
         JoinString(paramNames, ", "));
 }
