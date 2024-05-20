@@ -23,6 +23,17 @@ But, with power of LLVM, we hope that LILAC will generate bindings between C++ a
 
 **Let's break down language barrier!**
 
+## Supported Languages
+
+| Language |      Backend       |      Frontend      |
+|:--------:|:------------------:|:------------------:|
+|   C++    | :grey_exclamation: |        :o:         |
+|    C#    |   :interrobang:    | :grey_exclamation: |
+
+- :o: : Implemented.
+- :grey_exclamation: : Not implemented, but planned.
+- :interrobang: : Work in Progress
+
 ## Infrastructure
 
 LILAC Infrastructure consists of
