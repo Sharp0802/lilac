@@ -148,8 +148,10 @@ std::string MangleTypeToCSharpRef(lilac::core::Hierarchy* root, std::string name
 std::string MangleFunctionToCSharpDecl(
     lilac::core::Hierarchy* root,
     lilac::core::Hierarchy* function,
-    const std::string& libname)
+    const std::string&      libname)
 {
+    bool sret = false;
+
     std::vector<lilac::core::Hierarchy*> params;
     for (auto& member: function->Members)
         params.push_back(const_cast<lilac::core::Hierarchy*>(&member));
@@ -166,21 +168,29 @@ std::string MangleFunctionToCSharpDecl(
         {
             name = "__sret";
             type = "out " + type.replace(type.find_last_of('*'), 1, "");
+            sret = true;
         }
         paramNames.push_back(std::format("{} {}", type, name));
     }
 
-    auto parent     = function->GetParent();
-    auto parentName = parent->Kind == lilac::core::HOK_Root || parent->Kind == lilac::core::HOK_Namespace
-        ? "__Global"
-        : parent->Name;
+    auto        parent     = function->GetParent();
+    std::string parentName = parent->Kind == lilac::core::HOK_Type
+        ? parent->Name
+        : "__Global";
+    if (function->Kind == lilac::core::HOK_Method)
+    {
+        paramNames.insert(
+            sret ? ++paramNames.begin() : paramNames.begin(),
+            MangleTypeToCSharpRef(root, parent->ActualName, true) + "* __this"
+        );
+    }
 
     return std::format(
         R"(
 namespace {} {{
-    public static partial struct {} {{
+    public static partial class {} {{
         [System.Runtime.InteropServices.DllImport("{}", EntryPoint="{}", ExactSpelling=true)]
-        private static extern {} {}({});
+        private static unsafe extern {} {}({});
     }}
 }}
 )",
@@ -190,7 +200,8 @@ namespace {} {{
         function->ActualName,
         MangleTypeToCSharpRef(root, function->GetFunctionData().Type, true),
         MangleFunctionNameToCSharp(function->Name),
-        JoinString(paramNames, ", "));
+        JoinString(paramNames, ", ")
+    );
 }
 
 int main(int argc, char* argv[])
