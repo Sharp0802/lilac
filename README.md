@@ -20,6 +20,7 @@ For example, between C++ and C#:
 - P/Invoke couldn't support C++ well because of name mangling etc.
 
 But, with power of LLVM, we hope that LILAC will generate bindings between C++ and C# ...or what else!
+(Actually, For the languages not supporting LLVM, We need to implement frontend for each languages)
 
 **Let's break down language barrier!**
 
@@ -34,68 +35,6 @@ But, with power of LLVM, we hope that LILAC will generate bindings between C++ a
 - :grey_exclamation: : Not implemented, but planned.
 - :interrobang: : Work in Progress
 
-## Infrastructure
+## Docs
 
-LILAC Infrastructure consists of
-LLVM IR (Intermediate Representation) and 
-LILAC IHR (Intermediate Hierarchy Representation)
-
-```mermaid
-flowchart LR
-    Input --> IR
-    Input --> Hierarchy[IHR]
-
-    IR --> Bridge
-    Hierarchy --> Bridge
-
-    subgraph Frontend
-        Hierarchy
-    end
-
-    subgraph Backend
-        Bridge
-    end
-
-    subgraph LLVM
-        IR
-    end
-
-    subgraph LILAC
-        Frontend
-        Backend
-    end
-
-    Bridge --> Host
-```
-
-For example:
-
-```mermaid
-flowchart LR
-    Input --> Binary["Native Library (*.so/*.dll)"]
-    Input[C++ Library] --> IR
-    Input --> Hierarchy[IHR]
-
-    IR --> Bridge
-    Hierarchy --> Bridge["MSIL Bridge (*.dll)"]
-    Binary -. P/Invoke .-> Bridge
-
-    subgraph Frontend
-        Hierarchy
-    end
-
-    subgraph Backend
-        Bridge
-    end
-
-    subgraph LLVM
-        IR
-    end
-
-    subgraph LILAC
-        Frontend
-        Backend
-    end
-
-    Bridge -- Reference --> Host[C# Program]
-```
+- [INFRASTRUCTURE SPEC](docs/INFRASTRUCTURE.md)
