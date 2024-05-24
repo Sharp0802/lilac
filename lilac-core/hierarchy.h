@@ -102,6 +102,16 @@ namespace lilac::core
         std::string Type;
     };
 
+    struct EnumData
+    {
+        std::string Type;
+    };
+
+    struct TypeData
+    {
+        std::size_t Size;
+    };
+
     struct Hierarchy
     {
     private:
@@ -118,7 +128,7 @@ namespace lilac::core
 
     private:
         Hierarchy* m_ParentCache = nullptr;
-        std::variant<ConstantData, FunctionData, ParameterData> m_Trailer;
+        std::variant<ConstantData, FunctionData, ParameterData, EnumData, TypeData> m_Trailer;
 
     public:
         void Bake();
@@ -128,6 +138,9 @@ namespace lilac::core
 
         [[nodiscard]]
         Hierarchy* QueryByActualName(const std::string& name);
+
+        [[nodiscard]]
+        std::vector<Hierarchy*> QueryByKind(HierarchyKind kind);
 
         [[nodiscard]]
         std::vector<Hierarchy*> QueryBy(const std::function<bool(Hierarchy*)>& p);
@@ -141,6 +154,10 @@ namespace lilac::core
 
         ParameterData& GetParameterData();
 
+        EnumData& GetEnumData();
+
+        TypeData& GetTypeData();
+
         [[nodiscard]]
         const ConstantData& GetConstantData() const;
 
@@ -149,6 +166,12 @@ namespace lilac::core
 
         [[nodiscard]]
         const ParameterData& GetParameterData() const;
+
+        [[nodiscard]]
+        const EnumData& GetEnumData() const;
+
+        [[nodiscard]]
+        const TypeData& GetTypeData() const;
 
         Hierarchy(HierarchyKind kind, std::string actualName, std::string name);
 
