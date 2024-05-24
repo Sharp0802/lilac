@@ -146,8 +146,8 @@ package Backend
 
 package Output
 {
-    object "Bridge" as Bridge #LightBlue
-    object "Wrapper" as Wrapper #LightBlue
+    object "Bridge (Platform-Dependent)" as Bridge #LightBlue
+    object "Wrapper (Language-Dependent)" as Wrapper #LightBlue
 }
 
 NL --> LSA
