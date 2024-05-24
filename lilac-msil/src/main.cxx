@@ -238,11 +238,11 @@ int main(int argc, char* argv[])
             return 1;
         }
 
-        for (auto function: root->QueryBy([](auto h) { return h->Kind == lilac::core::HOK_Function; }))
+        for (auto function: root->QueryByKind(lilac::core::HOK_Function))
         {
             llvm::outs() << MangleFunctionToCSharpDecl(root.get(), function, libname);
         }
-        for (auto function: root->QueryBy([](auto h) { return h->Kind == lilac::core::HOK_Method; }))
+        for (auto function: root->QueryByKind(lilac::core::HOK_Method))
         {
             auto parent = function->GetParent();
             if (parent == nullptr || parent->Kind != lilac::core::HOK_Type)
