@@ -122,3 +122,43 @@ RT <-[#2222FF]- Wrapper
 Source <-right[#2222FF]- RT
 
 @enduml
+
+@startuml compilation
+
+package Source
+{
+    object "non-LLVM Languages (e.g. C#, Java)" as NL #LightCoral
+    object "Clang Languages (e.g. C/C++ on Clang)" as LL #LightCoral
+}
+
+package Frontend
+{
+    object "Language-specific analyzer (e.g. Roslyn)" as LSA
+    object "LLVM-based compiler with custom attributes" as LC
+}
+
+object "Attributed IR" as IR
+
+package Backend
+{
+    object "Language-specific code-generator" as LSCG
+}
+
+package Output
+{
+    object "Bridge" as Bridge #LightBlue
+    object "Wrapper" as Wrapper #LightBlue
+}
+
+NL --> LSA
+LSA --> IR
+
+LL --> LC
+LC --> IR
+
+IR --> Bridge : "llc"
+
+IR --> LSCG
+LSCG --> Wrapper
+
+@enduml

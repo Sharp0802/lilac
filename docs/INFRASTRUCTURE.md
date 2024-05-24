@@ -1,6 +1,6 @@
 # Infrastructure Spec
 
-## Basic Linkage
+## Summary
 
 ![](img/process.svg)
 
@@ -28,6 +28,13 @@ For example (Use C# on C++):
 However, Native languages (such as C++) doesn't have language-specific runtime:
 
 ![](img/wrap_cxx_with_dotnet.svg)
+
+## Compilation Process
+
+![](img/compilation.svg)
+
+- Additional attributes describing Object-Oriented information (such as 'which class owns this function') required
+  - That's because LLVM IR does not support OOP model
 
 ## Bidirectional Linkage
 
