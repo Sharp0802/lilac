@@ -1,5 +1,6 @@
 #pragma once
 
+#include <clang/AST/ASTContext.h>
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/Mangle.h>
@@ -10,6 +11,10 @@
 #include <clang/Tooling/Tooling.h>
 #include <clang/Tooling/Tooling.h>
 #include <clang/Tooling/JSONCompilationDatabase.h>
+#include <clang/Sema/ParsedAttr.h>
+#include <clang/Sema/Sema.h>
+#include <clang/Sema/SemaDiagnostic.h>
+#include <llvm/IR/Attributes.h>
 #include <llvm/Support/CommandLine.h>
 
 #include <algorithm>

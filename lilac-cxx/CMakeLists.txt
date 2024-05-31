@@ -7,8 +7,9 @@ file(GLOB_RECURSE HEADERS *.h)
 string(TIMESTAMP TIMESTAMP "%Y%m%d")
 configure_file(version.h.in version.h)
 
-add_executable(
+add_llvm_library(
         lilac-cxx
+        SHARED
         ${SOURCES}
         ${HEADERS}
 )
@@ -27,6 +28,6 @@ target_link_libraries(
         lilac-cxx
         PRIVATE
         lilac-core
-        clang-cpp
-        ${LLVM_LIBS}
+#        clang-cpp
+#        ${LLVM_LIBS}
 )
