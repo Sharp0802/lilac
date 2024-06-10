@@ -2,19 +2,6 @@
 
 namespace lilac::cxx
 {
-    bool EnsureExporting(clang::Sema& sema, clang::NamedDecl* decl)
-    {
-        const auto diag = sema.getDiagnostics().getCustomDiagID(
-            clang::DiagnosticsEngine::Error,
-            "not-exported function '%0' cannot be serialized");
-
-        if (ShouldExport(sema, decl))
-            return true;
-
-        sema.Diag(decl->getLocation(), diag) << decl;
-        return false;
-    }
-
     [[nodiscard]]
     std::string GetTypeString(const clang::TagDecl* decl);
 
