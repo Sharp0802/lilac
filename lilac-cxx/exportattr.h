@@ -7,6 +7,8 @@ namespace lilac::cxx
     class ExportAttrInfo final : public clang::ParsedAttrInfo
     {
     public:
+        static constexpr std::string AttrMangling = "__lilac_export";
+
         /************************************************************************
          * derived from clang::ParsedAttrInfo                                   *
          ************************************************************************/

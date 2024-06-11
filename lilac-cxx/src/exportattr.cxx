@@ -1,10 +1,12 @@
 #include "pch.h"
+#include "declserializer.h"
+
+#define WARNMSG "; exporting skipped!"
 
 namespace
 {
     clang::Visibility g_DefaultTypeVisibility  = clang::DefaultVisibility;
     clang::Visibility g_DefaultValueVisibility = clang::DefaultVisibility;
-
 
     bool ShouldExport(clang::Sema& sema, const clang::NamedDecl* decl)
     {
@@ -14,13 +16,13 @@ namespace
         auto&      diag              = sema.getDiagnostics();
         const auto invalidVisibility = diag.getCustomDiagID(
             clang::DiagnosticsEngine::Warning,
-            "declaration cannot be exported because of its visibility; exporting skipped!");
+            "declaration cannot be exported because of its visibility" WARNMSG);
         const auto invalidAccess = diag.getCustomDiagID(
             clang::DiagnosticsEngine::Warning,
-            "non-public declaration cannot be exported; exporting skipped!");
+            "non-public declaration cannot be exported" WARNMSG);
         const auto invalidSignature = sema.getDiagnostics().getCustomDiagID(
             clang::DiagnosticsEngine::Warning,
-            "%0 function '%1' cannot be exported; exporting skipped!");
+            "%0 function '%1' cannot be exported" WARNMSG);
 
         /************************************************************************
          * Ensure visibility of declaration to default                          *
@@ -92,6 +94,34 @@ namespace
         sema.Diag(decl->getLocation(), invalidAccess);
         return false;
     }
+
+    bool ExportAccessor(
+        clang::Sema&             sema,
+        const clang::ParsedAttr& attr,
+        clang::CXXRecordDecl*    record,
+        clang::MSPropertyDecl*   property,
+        clang::FunctionDecl*     accessor)
+    {
+        if (!accessor)
+        {
+            const auto accessorNotFound = sema.getDiagnostics().getCustomDiagID(
+                clang::DiagnosticsEngine::Warning,
+                "'%0' (required by '%1') is not a member of '%2'" WARNMSG);
+            sema.Diag(attr.getLoc(), accessorNotFound)
+                << property->getGetterId()
+                << property
+                << record;
+            return false;
+        }
+        accessor->addAttr(clang::AnnotateAttr::Create(
+            sema.Context,
+            lilac::cxx::ExportAttrInfo::AttrMangling,
+            nullptr,
+            0
+        ));
+
+        return true;
+    }
 }
 
 namespace lilac::cxx
@@ -127,7 +157,7 @@ namespace lilac::cxx
         {
             const auto invalidDeclType = sema.getDiagnostics().getCustomDiagID(
                 clang::DiagnosticsEngine::Warning,
-                "'%0' attribute can be applied to only functions, records and properties; exporting skipped!");
+                "'%0' attribute can be applied to only functions, records and properties" WARNMSG);
 
             sema.Diag(attr.getLoc(), invalidDeclType) << attr;
             return false;
@@ -147,12 +177,62 @@ namespace lilac::cxx
         {
             const auto anyArgs = sema.getDiagnostics().getCustomDiagID(
                 clang::DiagnosticsEngine::Warning,
-                "'" ATTR_NAME "' attribute accepts no argument; exporting skipped!");
+                "'" ATTR_NAME "' attribute accepts no argument" WARNMSG);
             sema.Diag(attr.getLoc(), anyArgs);
             return AttributeNotApplied;
         }
 
-        // TODO
+        if (auto* const record = clang::cast<clang::RecordDecl>(decl))
+        {
+            record->addAttr(clang::AnnotateTypeAttr::Create(
+                sema.Context,
+                AttrMangling,
+                nullptr,
+                0
+            ));
+        }
+        else if (auto* const property = clang::cast<clang::MSPropertyDecl>(decl))
+        {
+            auto* const parent = clang::dyn_cast<clang::CXXRecordDecl>(property->getDeclContext());
+            if (!parent)
+            {
+                const auto invalidParent = sema.getDiagnostics().getCustomDiagID(
+                    clang::DiagnosticsEngine::Warning,
+                    "'%0' property must be in CXXRecordDecl to export" WARNMSG);
+                sema.Diag(attr.getLoc(), invalidParent) << property;
+                return AttributeNotApplied;
+            }
+
+            if (!ExportAccessor(
+                    sema, attr, parent, property,
+                    FindMethod(parent, property->getSetterId()->getName().str())) ||
+                !ExportAccessor(
+                    sema, attr, parent, property,
+                    FindMethod(parent, property->getSetterId()->getName().str())))
+            {
+                return AttributeNotApplied;
+            }
+
+            property->addAttr(clang::AnnotateAttr::Create(
+                sema.Context,
+                AttrMangling,
+                nullptr,
+                0
+            ));
+        }
+        else if (auto* const function = clang::cast<clang::FunctionDecl>(decl))
+        {
+            function->addAttr(clang::AnnotateAttr::Create(
+                sema.Context,
+                AttrMangling,
+                nullptr,
+                0
+            ));
+        }
+        else
+        {
+            assert(false && "invalid decl type");
+        }
 
         return AttributeApplied;
     }
