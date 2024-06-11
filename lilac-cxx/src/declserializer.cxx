@@ -57,7 +57,7 @@ namespace lilac::cxx
         return GetTypeString(type->getAsTagDecl()) + std::string(ref, '*');
     }
 
-    clang::FunctionDecl* FindFunction(const clang::CXXRecordDecl* decl, const std::string& name)
+    clang::FunctionDecl* FindMethod(const clang::CXXRecordDecl* decl, const std::string& name)
     {
         for (const auto method: decl->methods())
             if (method->getName() == name)
