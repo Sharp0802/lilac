@@ -28,6 +28,4 @@ target_link_libraries(
         lilac-cxx
         PRIVATE
         lilac-core
-#        clang-cpp
-#        ${LLVM_LIBS}
 )
