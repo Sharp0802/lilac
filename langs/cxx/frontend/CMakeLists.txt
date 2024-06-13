@@ -4,9 +4,6 @@ set(VERSION 0.0.1)
 file(GLOB_RECURSE SOURCES src/*.cxx)
 file(GLOB_RECURSE HEADERS *.h)
 
-string(TIMESTAMP TIMESTAMP "%Y%m%d")
-configure_file(version.h.in version.h)
-
 add_llvm_library(
         lilac-cxx
         SHARED
