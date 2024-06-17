@@ -5,16 +5,21 @@
 #include <clang/AST/Decl.h>
 #include <clang/AST/Mangle.h>
 #include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/CodeGen/BackendUtil.h>
+#include <clang/CodeGen/CodeGenAction.h>
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Frontend/FrontendAction.h>
+#include <clang/Frontend/FrontendPluginRegistry.h>
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
 #include <clang/Tooling/Tooling.h>
 #include <clang/Tooling/JSONCompilationDatabase.h>
 #include <clang/Sema/ParsedAttr.h>
 #include <clang/Sema/Sema.h>
+#include <clang/Sema/SemaConsumer.h>
 #include <clang/Sema/SemaDiagnostic.h>
 #include <llvm/IR/Attributes.h>
+#include <llvm/Linker/Linker.h>
 #include <llvm/Support/CommandLine.h>
 
 #include <algorithm>
