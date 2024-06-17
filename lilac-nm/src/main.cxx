@@ -26,7 +26,7 @@ int main(int argc, const char* argv[])
 {
     llvm::cl::SetVersionPrinter([](llvm::raw_ostream& os)
     {
-        os << "lilac-llvm " VERSION " " TIMESTAMP "\n";
+        os << "lilac-nm " VERSION " " TIMESTAMP "\n";
     });
     llvm::cl::HideUnrelatedOptions(s_Category);
     llvm::cl::ParseCommandLineOptions(argc, argv);
