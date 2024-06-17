@@ -182,7 +182,7 @@ namespace lilac::cxx
             return AttributeNotApplied;
         }
 
-        if (auto* const record = clang::cast<clang::RecordDecl>(decl))
+        if (auto* const record = clang::dyn_cast<clang::RecordDecl>(decl))
         {
             record->addAttr(clang::AnnotateTypeAttr::Create(
                 sema.Context,
@@ -191,7 +191,7 @@ namespace lilac::cxx
                 0
             ));
         }
-        else if (auto* const property = clang::cast<clang::MSPropertyDecl>(decl))
+        else if (auto* const property = clang::dyn_cast<clang::MSPropertyDecl>(decl))
         {
             auto* const parent = clang::dyn_cast<clang::CXXRecordDecl>(property->getDeclContext());
             if (!parent)
@@ -220,7 +220,7 @@ namespace lilac::cxx
                 0
             ));
         }
-        else if (auto* const function = clang::cast<clang::FunctionDecl>(decl))
+        else if (auto* const function = clang::dyn_cast<clang::FunctionDecl>(decl))
         {
             function->addAttr(clang::AnnotateAttr::Create(
                 sema.Context,
