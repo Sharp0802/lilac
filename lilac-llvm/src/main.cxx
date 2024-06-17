@@ -1,23 +1,17 @@
 #include "pch.h"
 #include "version.h"
-#include "lilac-core/hierarchy.h"
 
 #include "llvm/IR/Function.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Constants.h"
 
+#include "langs/cxx/frontend/exportattr.h"
+
 namespace
 {
     llvm::cl::OptionCategory s_Category{
         "Link Options"
-    };
-
-    llvm::cl::opt<std::string> s_Out{
-        llvm::cl::Positional,
-        llvm::cl::desc("<output>"),
-        llvm::cl::cat(s_Category),
-        llvm::cl::Required
     };
 
     llvm::cl::opt<std::string> s_IRSource{
@@ -44,42 +38,36 @@ int main(int argc, const char* argv[])
     if (!module)
     {
         err.print(argv[0], llvm::errs());
-        llvm::errs() << "Couldn't read IR from file '" << s_IRSource << "'.\n";
+        llvm::errs()
+            << "Couldn't read IR from file '" << s_IRSource << "'.\n";
         return 1;
     }
 
-    for (auto& global: module->globals())
+    for (
+        auto* ca = llvm::cast<llvm::ConstantArray>(
+            module->getGlobalVariable("llvm.global.annotations")->getOperand(0));
+        auto& use: ca->operands())
     {
-        if (global.getName() == "llvm.global.annotations")
+        const auto* cs = llvm::cast<llvm::ConstantStruct>(use.get());
+        if (cs->getNumOperands() < 2)
+            continue;
+
+        if (const auto* fn = llvm::dyn_cast<llvm::Function>(cs->getOperand(0)))
         {
-            auto* ca = llvm::cast<llvm::ConstantArray>(global.getOperand(0));
-            for (auto& use: ca->operands())
+            unsigned i;
+            for (i = 1; i < cs->getNumOperands(); ++i)
             {
-                auto* cs = llvm::cast<llvm::ConstantStruct>(use.get());
-                if (cs->getNumOperands() < 2)
+                auto* var = llvm::dyn_cast<llvm::GlobalVariable>(cs->getOperand(i));
+                if (!var)
                     continue;
-
-                auto* fn = llvm::dyn_cast<llvm::Function>(cs->getOperand(0));
-                if (!fn)
-                    continue;
-
-                llvm::errs() << fn->getName();
-                for (auto i = 1; i < cs->getNumOperands(); ++i)
-                {
-                    auto* var   = llvm::dyn_cast<llvm::GlobalVariable>(cs->getOperand(i));
-                    if (!var)
-                        continue;
-
-                    auto  annot = llvm::dyn_cast<llvm::ConstantDataArray>(var->getInitializer())->getAsCString();
-
-                    llvm::errs() << "," << annot;
-                }
-                llvm::errs() << "\n";
+                if (llvm::dyn_cast<llvm::ConstantDataArray>(var->getInitializer())->getAsCString()
+                    == lilac::cxx::ExportAttrInfo::AttrMangling)
+                    break;
             }
+            if (i < cs->getNumOperands())
+                llvm::errs() << fn->getName() << "\n";
         }
     }
-
-    std::ofstream ofs(s_Out);
 
     return 0;
 }
