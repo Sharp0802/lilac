@@ -37,7 +37,7 @@ namespace lilac::cxx
 
         std::error_code      ec;
         llvm::raw_fd_ostream os(fci.getFrontendOpts().OutputFile, ec);
-        if (!ec)
+        if (ec)
         {
             llvm::errs()
                 << "Error occurred opening file '" << fci.getFrontendOpts().OutputFile
