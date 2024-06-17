@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "version.h"
 
 #include "llvm/IR/Function.h"
 #include "llvm/Support/raw_ostream.h"
@@ -26,7 +25,7 @@ int main(int argc, const char* argv[])
 {
     llvm::cl::SetVersionPrinter([](llvm::raw_ostream& os)
     {
-        os << "lilac-nm " VERSION " " TIMESTAMP "\n";
+        os << "lilac-nm (https://github.com/Sharp0802/lilac)\n";
     });
     llvm::cl::HideUnrelatedOptions(s_Category);
     llvm::cl::ParseCommandLineOptions(argc, argv);
