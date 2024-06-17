@@ -126,18 +126,17 @@ namespace
 
 namespace lilac::cxx
 {
-#define ATTR_NAME "apiexport"
-
     ExportAttrInfo::ExportAttrInfo()
     {
         OptArgs = 0;
 
         static constexpr Spelling S[] = {
-            { clang::ParsedAttr::AS_GNU, ATTR_NAME },
-            { clang::ParsedAttr::AS_Declspec, ATTR_NAME },
-            { clang::ParsedAttr::AS_C23, ATTR_NAME },
-            { clang::ParsedAttr::AS_CXX11, ATTR_NAME },
-            { clang::ParsedAttr::AS_CXX11, "lilac::" ATTR_NAME },
+            { clang::ParsedAttr::AS_GNU, "__lilac_export" },
+            { clang::ParsedAttr::AS_Declspec, "__lilac_export" },
+            { clang::ParsedAttr::AS_C23, "__lilac_export" },
+            { clang::ParsedAttr::AS_C23, "lilac::export" },
+            { clang::ParsedAttr::AS_CXX11, "__lilac_export" },
+            { clang::ParsedAttr::AS_CXX11, "lilac::export" },
         };
 
         Spellings = S;
@@ -177,8 +176,8 @@ namespace lilac::cxx
         {
             const auto anyArgs = sema.getDiagnostics().getCustomDiagID(
                 clang::DiagnosticsEngine::Warning,
-                "'" ATTR_NAME "' attribute accepts no argument" WARNMSG);
-            sema.Diag(attr.getLoc(), anyArgs);
+                "'%0' attribute accepts no argument" WARNMSG);
+            sema.Diag(attr.getLoc(), anyArgs) << attr;
             return AttributeNotApplied;
         }
 
