@@ -28,7 +28,7 @@ namespace lilac::cxx
         auto& ci = getCompilerInstance();
 
         clang::CompilerInstance fci;
-        fci.setSourceManager(ci.getSourceManagerPtr().get());
+        fci.setSourceManager(nullptr);
         fci.setInvocation(ci.getInvocationPtr());
         fci.createDiagnostics();
 
