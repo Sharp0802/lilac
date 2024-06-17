@@ -26,7 +26,7 @@ target_include_directories(
 target_link_libraries(
         lilac-llvm
         PRIVATE
-        lilac-core
+        lilac-shared
         clang-cpp
         ${LLVM_LIBS}
 )
