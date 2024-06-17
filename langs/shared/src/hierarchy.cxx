@@ -47,6 +47,14 @@ namespace lilac::core
                     << ',' << static_cast<uint32_t>(GetParameterData().Flags);
                 break;
 
+            case HOK_Enum:
+                ss << ',' << GetEnumData().Type;
+                break;
+
+            case HOK_Type:
+                ss << ',' << GetTypeData().Size;
+                break;
+
             default:
                 break;
         }
@@ -99,6 +107,11 @@ namespace lilac::core
         return nullptr;
     }
 
+    std::vector<Hierarchy*> Hierarchy::QueryByKind(const HierarchyKind kind)
+    {
+        return QueryBy([kind](auto h) { return h->Kind == kind; });
+    }
+
     std::vector<Hierarchy*> Hierarchy::QueryBy(const std::function<bool(Hierarchy*)>& p)
     {
         std::vector<Hierarchy*> v;
@@ -131,6 +144,16 @@ namespace lilac::core
         return std::get<ParameterData>(m_Trailer);
     }
 
+    EnumData& Hierarchy::GetEnumData()
+    {
+        return std::get<EnumData>(m_Trailer);
+    }
+
+    TypeData& Hierarchy::GetTypeData()
+    {
+        return std::get<TypeData>(m_Trailer);
+    }
+
     const ConstantData& Hierarchy::GetConstantData() const
     {
         return std::get<ConstantData>(m_Trailer);
@@ -144,6 +167,16 @@ namespace lilac::core
     const ParameterData& Hierarchy::GetParameterData() const
     {
         return std::get<ParameterData>(m_Trailer);
+    }
+
+    const EnumData& Hierarchy::GetEnumData() const
+    {
+        return std::get<EnumData>(m_Trailer);
+    }
+
+    const TypeData& Hierarchy::GetTypeData() const
+    {
+        return std::get<TypeData>(m_Trailer);
     }
 
     Hierarchy::Hierarchy(const HierarchyKind kind, std::string actualName, std::string name)
@@ -162,6 +195,12 @@ namespace lilac::core
                 break;
             case HOK_Parameter:
                 m_Trailer = ParameterData();
+                break;
+            case HOK_Enum:
+                m_Trailer = EnumData();
+                break;
+            case HOK_Type:
+                m_Trailer = TypeData();
                 break;
 
             default:
@@ -277,6 +316,14 @@ namespace lilac::core
                     h.GetParameterData().Index = std::stoll(tokens[DataOffset]);
                     h.GetParameterData().Type  = tokens[DataOffset + 1];
                     h.GetParameterData().Flags = std::stoul(tokens[DataOffset + 2]);
+                    break;
+
+                case HOK_Enum:
+                    h.GetEnumData().Type = tokens[DataOffset];
+                    break;
+
+                case HOK_Type:
+                    h.GetTypeData().Size = std::stoull(tokens[DataOffset]);
                     break;
 
                 default:

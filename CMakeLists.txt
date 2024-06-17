@@ -11,7 +11,5 @@ set(CMAKE_CXX_STANDARD 26)
 
 include_directories(${CMAKE_SOURCE_DIR})
 
-add_subdirectory(lilac-core)
-add_subdirectory(lilac-cxx)
 add_subdirectory(lilac-llvm)
-add_subdirectory(lilac-msil)
+add_subdirectory(langs)

@@ -7,7 +7,7 @@
 > [!IMPORTANT]
 > ***WORKING IN PROGRESS***
 
-*LILAC* is a **L**LVM based **I**nteroperability **LA**yer **C**ompiler -
+*LILAC* is a **L**anguage to language **I**nteroperability **LA**yer **C**ompiler -
 with a goal that producing bindings across languages.
 
 Interoperability across languages always sucks developers...

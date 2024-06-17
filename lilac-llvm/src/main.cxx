@@ -2,6 +2,11 @@
 #include "version.h"
 #include "lilac-core/hierarchy.h"
 
+#include "llvm/IR/Function.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Constants.h"
+
 namespace
 {
     llvm::cl::OptionCategory s_Category{
@@ -11,13 +16,6 @@ namespace
     llvm::cl::opt<std::string> s_Out{
         llvm::cl::Positional,
         llvm::cl::desc("<output>"),
-        llvm::cl::cat(s_Category),
-        llvm::cl::Required
-    };
-
-    llvm::cl::opt<std::string> s_IHSource{
-        llvm::cl::Positional,
-        llvm::cl::desc("<IH file>"),
         llvm::cl::cat(s_Category),
         llvm::cl::Required
     };
@@ -39,13 +37,6 @@ int main(int argc, const char* argv[])
     llvm::cl::HideUnrelatedOptions(s_Category);
     llvm::cl::ParseCommandLineOptions(argc, argv);
 
-    auto hierarchy = lilac::core::Hierarchy::CreateFromFile(s_IHSource);
-    if (!hierarchy)
-    {
-        llvm::errs() << "Couldn't read IH from file '" << s_IHSource << "'.\n";
-        return 1;
-    }
-
     llvm::LLVMContext  context;
     llvm::SMDiagnostic err;
 
@@ -57,33 +48,38 @@ int main(int argc, const char* argv[])
         return 1;
     }
 
-    for (auto& function : module->functions())
+    for (auto& global: module->globals())
     {
-        auto* h = hierarchy->QueryByActualName(function.getName().str());
-        if (!h) continue;
-
-        size_t i = 0;
-        for (auto iter = function.arg_begin(); iter != function.arg_end(); ++i, ++iter)
+        if (global.getName() == "llvm.global.annotations")
         {
-            if (iter->hasStructRetAttr())
+            auto* ca = llvm::cast<llvm::ConstantArray>(global.getOperand(0));
+            for (auto& use: ca->operands())
             {
-                h->GetFunctionData().Type = lilac::core::VoidTy;
+                auto* cs = llvm::cast<llvm::ConstantStruct>(use.get());
+                if (cs->getNumOperands() < 2)
+                    continue;
 
-                lilac::core::Hierarchy param{
-                    lilac::core::HOK_Parameter,
-                    lilac::core::SRetName,
-                    lilac::core::SRetName
-                };
-                param.GetParameterData().Index = -1;
-                param.GetParameterData().Type = iter->getParamStructRetType()->getStructName().str() + "*";
+                auto* fn = llvm::dyn_cast<llvm::Function>(cs->getOperand(0));
+                if (!fn)
+                    continue;
 
-                h->Members.emplace(param);
+                llvm::errs() << fn->getName();
+                for (auto i = 1; i < cs->getNumOperands(); ++i)
+                {
+                    auto* var   = llvm::dyn_cast<llvm::GlobalVariable>(cs->getOperand(i));
+                    if (!var)
+                        continue;
+
+                    auto  annot = llvm::dyn_cast<llvm::ConstantDataArray>(var->getInitializer())->getAsCString();
+
+                    llvm::errs() << "," << annot;
+                }
+                llvm::errs() << "\n";
             }
         }
     }
 
     std::ofstream ofs(s_Out);
-    ofs << hierarchy->ToString();
 
     return 0;
 }
