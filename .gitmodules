@@ -1,0 +1,3 @@
+[submodule "sub/frxml"]
+	path = sub/frxml
+	url = https://github.com/sharp0802/frxml
