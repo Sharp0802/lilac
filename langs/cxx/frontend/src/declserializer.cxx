@@ -54,7 +54,24 @@ namespace lilac::cxx
         {
         }
 
-        return GetTypeString(type->getAsTagDecl()) + std::string(ref, '*');
+        std::stringstream ss;
+        if (auto builtin = clang::dyn_cast<clang::BuiltinType>(type.getTypePtr()))
+            ss << "builtin" << builtin->getKind();
+        else
+            ss << GetTypeString(type->getAsTagDecl());
+        ss << std::string(ref, '*');
+        return ss.str();
+    }
+
+    std::string GetFunctionTypeReg(const clang::FunctionDecl* decl)
+    {
+        std::stringstream ss;
+        ss << '!' << GetTypeString(decl->getReturnType());
+        if (const auto method = clang::dyn_cast<clang::CXXMethodDecl>(decl))
+            ss << "/this$" << GetTypeString(method->getParent());
+        for (const auto parameter : decl->parameters())
+            ss << '/' << GetTypeString(parameter->getType());
+        return ss.str();
     }
 
     clang::FunctionDecl* FindMethod(const clang::CXXRecordDecl* decl, const std::string& name)

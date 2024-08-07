@@ -223,7 +223,7 @@ namespace lilac::cxx
         {
             function->addAttr(clang::AnnotateAttr::Create(
                 sema.Context,
-                AttrMangling,
+                AttrMangling + GetDisplayPath(function) + GetFunctionTypeReg(function),
                 nullptr,
                 0
             ));

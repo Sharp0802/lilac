@@ -1,5 +1,4 @@
 #include "pluginaction.h"
-#include "codegen.h"
 
 namespace lilac::cxx
 {
@@ -7,68 +6,57 @@ namespace lilac::cxx
         clang::CompilerInstance& ci,
         llvm::StringRef)
     {
-        return std::make_unique<LilacASTConsumer>(m_Context);
-    }
-
-    bool LilacAction::ParseArgs(const clang::CompilerInstance& ci, const std::vector<std::string>&)
-    {
-        if (ci.getCodeGenOpts().DiscardValueNames)
-        {
-            llvm::errs() << "cannot use LILAC with discard-value-name; may '-fno-discard-value-names' not set?\n";
-            return false;
-        }
-
-        return true;
-    }
-
-    void LilacAction::EndSourceFileAction()
-    {
-        PluginASTAction::EndSourceFileAction();
-
-        auto& ci = getCompilerInstance();
-
-        clang::CompilerInstance fci;
-        fci.setSourceManager(nullptr);
-        fci.setInvocation(ci.getInvocationPtr());
-        fci.createDiagnostics();
-
-        clang::EmitLLVMOnlyAction action;
-        fci.ExecuteAction(action);
-
-        std::error_code      ec;
-        llvm::raw_fd_ostream os(fci.getFrontendOpts().OutputFile, ec);
-        if (ec)
-        {
-            llvm::errs()
-                << "Error occurred opening file '" << fci.getFrontendOpts().OutputFile
-                << "': " << std::system_error(ec).what() << '\n';
-        }
-
-        const auto module = action.takeModule();
-
-        LilacCodeGen lcg(m_Context, *module);
-        lcg.Execute();
-
-        module->print(os, nullptr);
+        return std::make_unique<LilacASTConsumer>();
     }
 
     clang::PluginASTAction::ActionType LilacAction::getActionType()
     {
-        return ReplaceAction;
+        return AddAfterMainAction;
     }
 
-    LilacASTConsumer::LilacASTConsumer(LilacContext& context): m_Visitor(context)
+    bool LilacAction::ParseArgs(const clang::CompilerInstance& CI, const std::vector<std::string>& arg)
     {
-    }
-
-    void LilacASTConsumer::InitializeSema(clang::Sema& sema)
-    {
-        m_Visitor.SetSema(sema);
+        return true;
     }
 
     void LilacASTConsumer::HandleTranslationUnit(clang::ASTContext& context)
     {
-        m_Visitor.TraverseDecl(context.getTranslationUnitDecl());
+        LilacASTVisitor visitor;
+        visitor.TraverseDecl(context.getTranslationUnitDecl());
+    }
+
+    LilacASTVisitor::LilacASTVisitor()
+    {
+        const auto opt = llvm::cast<llvm::cl::opt<std::string>>(llvm::cl::getRegisteredOptions().lookup("o"));
+        m_OutputFilename = opt->getValue();
+    }
+
+    LilacASTVisitor::~LilacASTVisitor()
+    {
+
+    }
+
+    bool LilacASTVisitor::TraverseEnumDecl(clang::EnumDecl* decl)
+    {
+        std::vector<frxml::dom> children;
+        EnumVisitor visitor = [&](clang::EnumConstantDecl* constant)
+        {
+            children.push_back()
+        };
+    }
+
+    bool LilacASTVisitor::TraverseCXXRecordDecl(clang::CXXRecordDecl* decl)
+    {
+    }
+
+    bool LilacASTVisitor::TraverseFunctionDecl(clang::FunctionDecl* decl)
+    {
+    }
+
+    bool LilacASTVisitor::EnumVisitor::TraverseEnumConstantDecl(clang::EnumConstantDecl* decl)
+    {
+        m_Delegate(decl);
+        return true;
     }
 }
 
