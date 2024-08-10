@@ -1,5 +1,8 @@
 #pragma once
 
+/********************************
+ * Clang/LLVM                   *
+ ********************************/
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/Decl.h>
@@ -22,6 +25,14 @@
 #include <llvm/Linker/Linker.h>
 #include <llvm/Support/CommandLine.h>
 
+/********************************
+ * External Dependencies        *
+ ********************************/
+#include <frxml.h>
+
+/********************************
+ * Standard Libraries           *
+ ********************************/
 #include <algorithm>
 #include <fstream>
 #include <utility>
