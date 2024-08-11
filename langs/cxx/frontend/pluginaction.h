@@ -16,6 +16,8 @@ namespace lilac::cxx
 
     class LilacASTConsumer final : public clang::SemaConsumer
     {
+        clang::Sema* m_Sema = nullptr;
+
     public:
         void InitializeSema(clang::Sema& sema) override;
 
@@ -24,10 +26,16 @@ namespace lilac::cxx
 
     class LilacASTVisitor final : public clang::RecursiveASTVisitor<LilacASTVisitor>
     {
-        std::string m_OutputFilename;
+        using Level = clang::DiagnosticsEngine::Level;
+
+        clang::Sema&              m_Sema;
+        clang::DiagnosticsEngine& m_Diag;
+
+        std::string             m_OutputFilename;
+        std::vector<frxml::dom> m_Decls;
 
     public:
-        LilacASTVisitor();
+        LilacASTVisitor(clang::Sema& sema, clang::TranslationUnitDecl* unit);
 
         ~LilacASTVisitor();
 

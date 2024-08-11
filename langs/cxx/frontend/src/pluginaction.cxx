@@ -19,20 +19,44 @@ namespace lilac::cxx
         return true;
     }
 
+    void LilacASTConsumer::InitializeSema(clang::Sema& sema)
+    {
+        m_Sema = &sema;
+    }
+
     void LilacASTConsumer::HandleTranslationUnit(clang::ASTContext& context)
     {
-        LilacASTVisitor visitor;
+        LilacASTVisitor visitor(*m_Sema, context.getTranslationUnitDecl());
         visitor.TraverseDecl(context.getTranslationUnitDecl());
     }
 
-    LilacASTVisitor::LilacASTVisitor()
+    LilacASTVisitor::LilacASTVisitor(clang::Sema& sema, clang::TranslationUnitDecl* unit)
+        : m_Sema(sema),
+          m_Diag(m_Sema.getDiagnostics())
     {
-        const auto opt = llvm::cast<llvm::cl::opt<std::string>>(llvm::cl::getRegisteredOptions().lookup("o"));
-        m_OutputFilename = opt->getValue();
+        const auto rOpt = llvm::cl::getRegisteredOptions().lookup("o");
+        const auto opt  = dynamic_cast<llvm::cl::opt<std::string>*>(rOpt);
+
+        if (!opt)
+        {
+            auto err = m_Diag.getCustomDiagID(
+                Level::Fatal,
+                "Couldn't get output file name; Did you specified '-o' option?");
+            m_Sema.Diag(unit->getLocation(), err);
+        }
+        else
+        {
+            m_OutputFilename = opt->getValue();
+        }
     }
 
     LilacASTVisitor::~LilacASTVisitor()
     {
+        if (m_OutputFilename.empty())
+            return;
+
+        // TODO : Serialize into XML
+    }
 
     }
 
