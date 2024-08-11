@@ -13,7 +13,5 @@ set(CMAKE_CXX_STANDARD 26)
 
 include_directories(${CMAKE_SOURCE_DIR})
 
-add_subdirectory(lilac)
-add_subdirectory(lilac-nm)
 add_subdirectory(sub/frxml/frxml)
 add_subdirectory(langs)
