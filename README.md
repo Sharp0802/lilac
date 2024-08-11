@@ -28,7 +28,7 @@ But, with power of LLVM, we hope that LILAC will generate bindings between C++ a
 
 | Language |      Backend       |      Frontend      |
 |:--------:|:------------------:|:------------------:|
-|   C++    | :grey_exclamation: |        :o:         |
+|   C++    | :grey_exclamation: |   :interrobang:    |
 |    C#    |   :interrobang:    | :grey_exclamation: |
 
 - :o: : Implemented.
