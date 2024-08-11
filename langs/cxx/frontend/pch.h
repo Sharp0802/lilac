@@ -7,6 +7,7 @@
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/Mangle.h>
+#include <clang/AST/RecordLayout.h>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/CodeGen/BackendUtil.h>
 #include <clang/CodeGen/CodeGenAction.h>
