@@ -37,6 +37,7 @@ namespace lilac::cxx
 
         bool TraverseFunctionDecl(clang::FunctionDecl* decl);
 
+
         class EnumVisitor : public RecursiveASTVisitor<EnumVisitor>
         {
             std::function<void(clang::EnumConstantDecl*)> m_Delegate;
@@ -45,6 +46,16 @@ namespace lilac::cxx
             EnumVisitor(std::function<void(clang::EnumConstantDecl* constant)>);
 
             bool TraverseEnumConstantDecl(clang::EnumConstantDecl* decl);
+        };
+
+        class CXXRecordVisitor : public RecursiveASTVisitor<CXXRecordVisitor>
+        {
+            std::function<void(clang::CXXMethodDecl*)> m_Delegate;
+
+        public:
+            CXXRecordVisitor(std::function<void(clang::CXXMethodDecl*)> delegate);
+
+            bool TraverseCXXMethodDecl(clang::CXXMethodDecl* decl);
         };
     };
 }
