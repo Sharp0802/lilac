@@ -31,13 +31,12 @@ namespace lilac::cxx
         clang::Sema&              m_Sema;
         clang::DiagnosticsEngine& m_Diag;
 
-        std::string m_OutputFilename;
         frxml::dom m_Root;
 
         frxml::dom* GetNamespaceDOM(clang::NamedDecl* decl);
 
     public:
-        LilacASTVisitor(clang::Sema& sema, clang::TranslationUnitDecl* unit);
+        LilacASTVisitor(clang::Sema& sema);
 
         ~LilacASTVisitor();
 

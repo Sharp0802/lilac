@@ -27,7 +27,7 @@ namespace lilac::cxx
 
     void LilacASTConsumer::HandleTranslationUnit(clang::ASTContext& context)
     {
-        LilacASTVisitor visitor(*m_Sema, context.getTranslationUnitDecl());
+        LilacASTVisitor visitor(*m_Sema);
         visitor.TraverseDecl(context.getTranslationUnitDecl());
     }
 
@@ -35,7 +35,10 @@ namespace lilac::cxx
     {
         const auto ctx = decl->getDeclContext();
 
-        if (ctx->getParent()->getDeclKind() != clang::Decl::Namespace)
+        if (const auto parent = ctx->getParent();
+            parent &&
+            parent->getDeclKind() != clang::Decl::Namespace &&
+            parent->getDeclKind() != clang::Decl::TranslationUnit)
         {
             static auto err = m_Diag.getCustomDiagID(
                 Level::Error,
@@ -81,32 +84,16 @@ namespace lilac::cxx
         return cur;
     }
 
-    LilacASTVisitor::LilacASTVisitor(clang::Sema& sema, clang::TranslationUnitDecl* unit)
+    LilacASTVisitor::LilacASTVisitor(clang::Sema& sema)
         : m_Sema(sema),
           m_Diag(m_Sema.getDiagnostics()),
           m_Root(frxml::dom::element("assembly"))
     {
-        const auto rOpt = llvm::cl::getRegisteredOptions().lookup("o");
-
-        if (const auto opt = dynamic_cast<llvm::cl::opt<std::string>*>(rOpt); !opt)
-        {
-            const auto err = m_Diag.getCustomDiagID(
-                Level::Fatal,
-                "Couldn't get output file name; Did you specified '-o' option?");
-            m_Sema.Diag(unit->getLocation(), err);
-        }
-        else
-        {
-            m_OutputFilename = opt->getValue();
-        }
     }
 
     LilacASTVisitor::~LilacASTVisitor()
     {
-        if (m_OutputFilename.empty())
-            return;
-
-        std::ofstream ofs(m_OutputFilename + ".xml");
+        std::ofstream ofs("lilac.xml");
         ofs << static_cast<std::string>(frxml::doc{ m_Root });
     }
 
@@ -118,7 +105,7 @@ namespace lilac::cxx
                 t = usingT->getUnderlyingType().getTypePtr();
             else if (const auto decltypeT = clang::dyn_cast<clang::DecltypeType>(t))
                 t = decltypeT->getUnderlyingType().getTypePtr();
-            else if (auto macroT = clang::dyn_cast<clang::MacroQualifiedType>(t))
+            else if (const auto macroT = clang::dyn_cast<clang::MacroQualifiedType>(t))
                 t = macroT->getUnderlyingType().getTypePtr();
             else if (clang::isa<clang::TypedefType>(t))
             {
@@ -185,15 +172,15 @@ namespace lilac::cxx
         std::string&                name)
     {
         type = type->getUnqualifiedDesugaredType();
-        if (type->isBuiltinType())
-        {
-            name = GetBuiltinTypeName(clang::cast<clang::BuiltinType>(type)->getKind());
-            return true;
-        }
-
         int nRef;
         for (nRef = 0; type->isPointerOrReferenceType(); ++nRef)
             type  = type->getPointeeType()->getUnqualifiedDesugaredType();
+
+        if (type->isBuiltinType())
+        {
+            name = GetBuiltinTypeName(clang::cast<clang::BuiltinType>(type)->getKind()) + std::string(nRef, '*');
+            return true;
+        }
 
         if (type->isFunctionType())
         {
@@ -205,7 +192,20 @@ namespace lilac::cxx
             return false;
         }
 
-        if (type->getAsRecordDecl()->getParent()->getDeclKind() != clang::Decl::Namespace)
+        if (!type->getAsRecordDecl())
+        {
+            static auto err = sema.getDiagnostics().getCustomDiagID(
+                clang::DiagnosticsEngine::Error,
+                "Exported types must be built-in or convertible to record declaration");
+            sema.Diag(loc, err);
+
+            return false;
+        }
+
+        if (const auto parent = type->getAsRecordDecl()->getParent();
+            parent &&
+            parent->getDeclKind() != clang::Decl::Namespace &&
+            parent->getDeclKind() != clang::Decl::TranslationUnit)
         {
             static auto err = sema.getDiagnostics().getCustomDiagID(
                 clang::DiagnosticsEngine::Error,
@@ -318,9 +318,9 @@ namespace lilac::cxx
             return true;
 
         auto dom = frxml::dom::element("function", {
-            { "name", decl->getNameAsString() },
-            { "return", ret }
-        });
+                                           { "name", decl->getNameAsString() },
+                                           { "return", ret }
+                                       });
         if (!RecordParameters(m_Sema, dom, decl))
             return true;
 
