@@ -34,7 +34,7 @@ namespace lilac::cxx
 
         frxml::dom& m_Root;
 
-        frxml::dom* GetNamespaceDOM(clang::NamedDecl* decl);
+        frxml::dom* GetNamespaceDOM(clang::NamedDecl* decl) const;
 
         bool IsDuplicated(clang::NamedDecl* decl, const std::string& tag);
 

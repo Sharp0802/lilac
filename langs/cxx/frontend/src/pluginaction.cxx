@@ -1,4 +1,6 @@
 #include "pluginaction.h"
+
+#include "exportattr.h"
 #include "typemap.h"
 
 namespace lilac::cxx
@@ -31,7 +33,7 @@ namespace lilac::cxx
         visitor.TraverseDecl(context.getTranslationUnitDecl());
     }
 
-    frxml::dom* LilacASTVisitor::GetNamespaceDOM(clang::NamedDecl* decl)
+    frxml::dom* LilacASTVisitor::GetNamespaceDOM(clang::NamedDecl* decl) const
     {
         const auto ctx = decl->getDeclContext();
 
@@ -256,13 +258,45 @@ namespace lilac::cxx
         return true;
     }
 
+    bool ShouldBeExported(clang::NamedDecl* decl)
+    {
+        auto exported = false;
+
+        if (clang::isa<clang::RecordDecl>(decl))
+        {
+            for (const auto attr: decl->attrs())
+            {
+                if (const auto anot = clang::dyn_cast<clang::AnnotateTypeAttr>(attr);
+                    !anot || anot->getAnnotation() != ExportAttrInfo::AttrMangling)
+                    continue;
+
+                exported = true;
+                break;
+            }
+        }
+        else
+        {
+            for (const auto attr: decl->attrs())
+            {
+                if (const auto anot = clang::dyn_cast<clang::AnnotateAttr>(attr);
+                    !anot || anot->getAnnotation() != ExportAttrInfo::AttrMangling)
+                    continue;
+
+                exported = true;
+                break;
+            }
+        }
+
+        return exported;
+    }
+
     bool LilacASTVisitor::IsDuplicated(clang::NamedDecl* decl, const std::string& tag)
     {
         const auto ns = GetNamespaceDOM(decl);
         if (!ns) return true;
 
         auto skip = false;
-        for (auto& child : ns->children())
+        for (auto& child: ns->children())
         {
             if (child.tag().view() != tag ||
                 child.attr()["name"].view() != decl->getNameAsString())
@@ -277,6 +311,8 @@ namespace lilac::cxx
     // ReSharper disable once CppDFAConstantFunctionResult
     bool LilacASTVisitor::TraverseCXXRecordDecl(clang::CXXRecordDecl* decl)
     {
+        if (!ShouldBeExported(decl))
+            return true;
         if (IsDuplicated(decl, "record"))
             return true;
 
@@ -285,6 +321,9 @@ namespace lilac::cxx
         CXXRecordVisitor visitor{
             [&](clang::CXXMethodDecl* method)
             {
+                if (!ShouldBeExported(method))
+                    return;
+
                 std::string ret;
                 if (!GetTypeName(m_Sema, method->getLocation(), method->getReturnType().getTypePtr(), ret))
                     return;
@@ -328,6 +367,8 @@ namespace lilac::cxx
     // ReSharper disable once CppDFAConstantFunctionResult
     bool LilacASTVisitor::TraverseFunctionDecl(clang::FunctionDecl* decl)
     {
+        if (!ShouldBeExported(decl))
+            return true;
         if (clang::isa<clang::CXXMethodDecl>(decl))
             return true;
 
