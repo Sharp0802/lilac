@@ -352,6 +352,14 @@ namespace lilac::cxx
 
         const auto size  = typeInfo.Width;
         const auto align = typeInfo.Align;
+        if (size % 8 || align % 8)
+        {
+            static auto err = m_Diag.getCustomDiagID(
+                Level::Error,
+                "A size and alignment of record must be multiple of bytes");
+            m_Sema.Diag(decl->getLocation(), err);
+        }
+
         ns->children().push_back(frxml::dom::element(
             "record",
             {
