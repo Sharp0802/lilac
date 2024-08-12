@@ -349,12 +349,15 @@ namespace lilac::cxx
         if (!ns) return true;
 
         const auto typeInfo = decl->getASTContext().getTypeInfo(decl->getTypeForDecl());
+
+        const auto size  = typeInfo.Width;
+        const auto align = typeInfo.Align;
         ns->children().push_back(frxml::dom::element(
             "record",
             {
                 { "name", decl->getNameAsString() },
-                { "size", std::to_string(typeInfo.Width / 8) },
-                { "align", std::to_string(typeInfo.Align) }
+                { "size", std::to_string(size / 8) },
+                { "align", std::to_string(align / 8) }
             },
             children
         ));
