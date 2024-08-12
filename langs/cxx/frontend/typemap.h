@@ -14,6 +14,8 @@ namespace lilac::cxx
         using Type = type; \
     }
 
+TYPEKINDMAP(Void, void);
+
 // UNSIGNED INTEGER
 TYPEKINDMAP(Bool, bool);
 TYPEKINDMAP(Char_U, uint8_t);
@@ -57,6 +59,7 @@ namespace lilac::cxx
     {
 #define QUERY(type) { clang::BuiltinType::Kind::type, F<clang::BuiltinType::Kind::type>() }
         return std::map<clang::BuiltinType::Kind, Value>{
+            QUERY(Void),
             QUERY(Bool),
             QUERY(Char_U),
             QUERY(UChar),
@@ -97,6 +100,7 @@ namespace lilac::cxx
 #define CASE___(a, ...) case clang::BuiltinType::Kind::a: __VA_OPT__(CASE__(__VA_ARGS__))
 #define CASE__(a, ...) case clang::BuiltinType::Kind::a: __VA_OPT__(CASE___(__VA_ARGS__))
 #define CASE_(name, ...) CASE__(__VA_ARGS__) return name
+            CASE_("void", Void);
             CASE_("bool", Bool);
             CASE_("u8", Char_U);
             CASE_("u8", UChar);
