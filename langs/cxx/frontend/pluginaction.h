@@ -18,7 +18,7 @@ namespace lilac::cxx
         frxml::dom& m_Root;
 
     public:
-        LilacASTConsumer(frxml::dom& dom);
+        explicit LilacASTConsumer(frxml::dom& dom);
 
         void InitializeSema(clang::Sema& sema) override;
 
@@ -35,6 +35,8 @@ namespace lilac::cxx
         frxml::dom& m_Root;
 
         frxml::dom* GetNamespaceDOM(clang::NamedDecl* decl);
+
+        bool IsDuplicated(clang::NamedDecl* decl, const std::string& tag);
 
     public:
         LilacASTVisitor(clang::Sema& sema, frxml::dom& dom);

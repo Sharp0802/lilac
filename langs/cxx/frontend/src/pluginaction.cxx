@@ -256,8 +256,7 @@ namespace lilac::cxx
         return true;
     }
 
-    // ReSharper disable once CppDFAConstantFunctionResult
-    bool LilacASTVisitor::TraverseCXXRecordDecl(clang::CXXRecordDecl* decl)
+    bool LilacASTVisitor::IsDuplicated(clang::NamedDecl* decl, const std::string& tag)
     {
         const auto ns = GetNamespaceDOM(decl);
         if (!ns) return true;
@@ -265,13 +264,20 @@ namespace lilac::cxx
         auto skip = false;
         for (auto& child : ns->children())
         {
-            if (child.tag().view() != "record" ||
+            if (child.tag().view() != tag ||
                 child.attr()["name"].view() != decl->getNameAsString())
                 continue;
             skip = true;
             break;
         }
-        if (skip)
+
+        return skip;
+    }
+
+    // ReSharper disable once CppDFAConstantFunctionResult
+    bool LilacASTVisitor::TraverseCXXRecordDecl(clang::CXXRecordDecl* decl)
+    {
+        if (IsDuplicated(decl, "record"))
             return true;
 
         std::vector<frxml::dom> children;
@@ -303,6 +309,9 @@ namespace lilac::cxx
         };
         visitor.TraverseDecl(decl);
 
+        const auto ns = GetNamespaceDOM(decl);
+        if (!ns) return true;
+
         const auto typeInfo = decl->getASTContext().getTypeInfo(decl->getTypeForDecl());
         ns->children().push_back(frxml::dom::element(
             "record",
@@ -319,23 +328,10 @@ namespace lilac::cxx
     // ReSharper disable once CppDFAConstantFunctionResult
     bool LilacASTVisitor::TraverseFunctionDecl(clang::FunctionDecl* decl)
     {
-        const auto ns = GetNamespaceDOM(decl);
-        if (!ns) return true;
-
-        auto skip = false;
-        for (auto& child : ns->children())
-        {
-            if (child.tag().view() != "function" ||
-                child.attr()["name"].view() != decl->getNameAsString())
-                continue;
-            skip = true;
-            break;
-        }
-        if (skip)
+        if (clang::isa<clang::CXXMethodDecl>(decl))
             return true;
 
-
-        if (clang::isa<clang::CXXMethodDecl>(decl))
+        if (IsDuplicated(decl, "function"))
             return true;
 
         std::string ret;
@@ -353,6 +349,9 @@ namespace lilac::cxx
             });
         if (!RecordParameters(m_Sema, dom, decl))
             return true;
+
+        const auto ns = GetNamespaceDOM(decl);
+        if (!ns) return true;
 
         ns->children().push_back(dom);
         return true;
