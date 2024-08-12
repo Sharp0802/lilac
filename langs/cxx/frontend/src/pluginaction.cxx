@@ -133,6 +133,7 @@ namespace lilac::cxx
         }
     }
 
+    // ReSharper disable once CppDFAConstantFunctionResult
     bool LilacASTVisitor::TraverseEnumDecl(clang::EnumDecl* decl)
     {
         std::vector<frxml::dom> children;
@@ -177,6 +178,91 @@ namespace lilac::cxx
         return true;
     }
 
+    bool GetTypeName(
+        clang::Sema&                sema,
+        const clang::SourceLocation loc,
+        const clang::Type*          type,
+        std::string&                name)
+    {
+        type = type->getUnqualifiedDesugaredType();
+        if (type->isBuiltinType())
+        {
+            name = GetBuiltinTypeName(clang::cast<clang::BuiltinType>(type)->getKind());
+            return true;
+        }
+
+        int nRef;
+        for (nRef = 0; type->isPointerOrReferenceType(); ++nRef)
+            type  = type->getPointeeType()->getUnqualifiedDesugaredType();
+
+        if (type->isFunctionType())
+        {
+            static auto err = sema.getDiagnostics().getCustomDiagID(
+                clang::DiagnosticsEngine::Error,
+                "Function types cannot be exported");
+            sema.Diag(loc, err);
+
+            return false;
+        }
+
+        if (type->getAsRecordDecl()->getParent()->getDeclKind() != clang::Decl::Namespace)
+        {
+            static auto err = sema.getDiagnostics().getCustomDiagID(
+                clang::DiagnosticsEngine::Error,
+                "Exported types must be in namespace or global");
+            sema.Diag(loc, err);
+
+            return false;
+        }
+
+        std::stack<std::string> stk;
+        for (
+            auto decl = type->getAsRecordDecl()->getParent();
+            decl != nullptr && decl->getDeclKind() == clang::Decl::Namespace;
+            decl = decl->getParent())
+        {
+            stk.push(clang::cast<clang::NamespaceDecl>(decl)->getNameAsString());
+        }
+
+        std::stringstream ss;
+        for (; !stk.empty(); stk.pop())
+        {
+            ss << stk.top() << '/';
+        }
+        ss << type->getAsRecordDecl()->getNameAsString();
+        ss << std::string(nRef, '*');
+
+        name = ss.str();
+        return true;
+    }
+
+    bool RecordParameters(clang::Sema& sema, frxml::dom& dom, clang::FunctionDecl* fn)
+    {
+        for (const auto parameter: fn->parameters())
+        {
+            std::string type;
+            if (!GetTypeName(
+                sema,
+                parameter->getLocation(),
+                parameter->getType()->getUnqualifiedDesugaredType(),
+                type))
+            {
+                return false;
+            }
+
+            dom.children().push_back(frxml::dom::element(
+                "param",
+                {
+                    { "name", parameter->getNameAsString() },
+                    { "type", type }
+                }
+            ));
+        }
+
+        return true;
+    }
+
+    // ReSharper disable once CppDFAConstantFunctionResult
     bool LilacASTVisitor::TraverseCXXRecordDecl(clang::CXXRecordDecl* decl)
     {
         std::vector<frxml::dom> children;
@@ -184,7 +270,23 @@ namespace lilac::cxx
         CXXRecordVisitor visitor{
             [&](clang::CXXMethodDecl* method)
             {
-                // TODO
+                std::string ret;
+                if (!GetTypeName(m_Sema, method->getLocation(), method->getReturnType().getTypePtr(), ret))
+                    return;
+
+                auto dom = frxml::dom::element("", {
+                    { "name", method->getNameAsString() },
+                    { "return", ret }
+                });
+                if (clang::isa<clang::CXXConstructorDecl>(method))
+                    dom.tag() = "ctor";
+                else if (clang::isa<clang::CXXDestructorDecl>(method))
+                    dom.tag() = "dtor";
+                else
+                    dom.tag() = static_cast<std::string>(method->isStatic() ? "function" : "method");
+                RecordParameters(m_Sema, dom, method);
+
+                children.push_back(dom);
             }
         };
         visitor.TraverseDecl(decl);
@@ -205,13 +307,27 @@ namespace lilac::cxx
         return true;
     }
 
+    // ReSharper disable once CppDFAConstantFunctionResult
     bool LilacASTVisitor::TraverseFunctionDecl(clang::FunctionDecl* decl)
     {
         if (clang::isa<clang::CXXMethodDecl>(decl))
             return true;
 
-        // TODO
+        std::string ret;
+        if (!GetTypeName(m_Sema, decl->getLocation(), decl->getReturnType().getTypePtr(), ret))
+            return true;
 
+        auto dom = frxml::dom::element("function", {
+            { "name", decl->getNameAsString() },
+            { "return", ret }
+        });
+        if (!RecordParameters(m_Sema, dom, decl))
+            return true;
+
+        const auto ns = GetNamespaceDOM(decl);
+        if (!ns) return true;
+
+        ns->children().push_back(dom);
         return true;
     }
 
@@ -220,6 +336,7 @@ namespace lilac::cxx
     {
     }
 
+    // ReSharper disable once CppMemberFunctionMayBeConst
     bool LilacASTVisitor::EnumVisitor::TraverseEnumConstantDecl(clang::EnumConstantDecl* decl)
     {
         m_Delegate(decl);
@@ -231,6 +348,7 @@ namespace lilac::cxx
     {
     }
 
+    // ReSharper disable once CppMemberFunctionMayBeConst
     bool LilacASTVisitor::CXXRecordVisitor::TraverseCXXMethodDecl(clang::CXXMethodDecl* decl)
     {
         m_Delegate(decl);
