@@ -4,21 +4,22 @@
 
 namespace lilac::cxx
 {
-    class LilacAction final : public clang::PluginASTAction
+    frxml::dom& GetDOMRoot();
+
+    class LilacAction final : public clang::ASTFrontendAction
     {
     public:
         std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance&, llvm::StringRef) override;
-
-        ActionType getActionType() override;
-
-        bool ParseArgs(const clang::CompilerInstance& CI, const std::vector<std::string>& arg) override;
     };
 
     class LilacASTConsumer final : public clang::SemaConsumer
     {
         clang::Sema* m_Sema = nullptr;
+        frxml::dom& m_Root;
 
     public:
+        LilacASTConsumer(frxml::dom& dom);
+
         void InitializeSema(clang::Sema& sema) override;
 
         void HandleTranslationUnit(clang::ASTContext& context) override;
@@ -31,14 +32,12 @@ namespace lilac::cxx
         clang::Sema&              m_Sema;
         clang::DiagnosticsEngine& m_Diag;
 
-        frxml::dom m_Root;
+        frxml::dom& m_Root;
 
         frxml::dom* GetNamespaceDOM(clang::NamedDecl* decl);
 
     public:
-        LilacASTVisitor(clang::Sema& sema);
-
-        ~LilacASTVisitor();
+        LilacASTVisitor(clang::Sema& sema, frxml::dom& dom);
 
         bool TraverseEnumDecl(clang::EnumDecl* decl);
 

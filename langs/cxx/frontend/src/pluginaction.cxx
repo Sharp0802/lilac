@@ -3,21 +3,21 @@
 
 namespace lilac::cxx
 {
+    frxml::dom& GetDOMRoot()
+    {
+        static frxml::dom dom = frxml::dom::element("assembly");
+        return dom;
+    }
+
     std::unique_ptr<clang::ASTConsumer> LilacAction::CreateASTConsumer(
         clang::CompilerInstance& ci,
         llvm::StringRef)
     {
-        return std::make_unique<LilacASTConsumer>();
+        return std::make_unique<LilacASTConsumer>(GetDOMRoot());
     }
 
-    clang::PluginASTAction::ActionType LilacAction::getActionType()
+    LilacASTConsumer::LilacASTConsumer(frxml::dom& dom) : m_Root(dom)
     {
-        return AddAfterMainAction;
-    }
-
-    bool LilacAction::ParseArgs(const clang::CompilerInstance& CI, const std::vector<std::string>& arg)
-    {
-        return true;
     }
 
     void LilacASTConsumer::InitializeSema(clang::Sema& sema)
@@ -27,7 +27,7 @@ namespace lilac::cxx
 
     void LilacASTConsumer::HandleTranslationUnit(clang::ASTContext& context)
     {
-        LilacASTVisitor visitor(*m_Sema);
+        LilacASTVisitor visitor(*m_Sema, m_Root);
         visitor.TraverseDecl(context.getTranslationUnitDecl());
     }
 
@@ -84,17 +84,11 @@ namespace lilac::cxx
         return cur;
     }
 
-    LilacASTVisitor::LilacASTVisitor(clang::Sema& sema)
+    LilacASTVisitor::LilacASTVisitor(clang::Sema& sema, frxml::dom& dom)
         : m_Sema(sema),
           m_Diag(m_Sema.getDiagnostics()),
-          m_Root(frxml::dom::element("assembly"))
+          m_Root(dom)
     {
-    }
-
-    LilacASTVisitor::~LilacASTVisitor()
-    {
-        std::ofstream ofs("lilac.xml");
-        ofs << static_cast<std::string>(frxml::doc{ m_Root });
     }
 
     const clang::Type* GetUnderlyingType(clang::Sema& sema, clang::SourceLocation loc, const clang::Type* t)
@@ -265,6 +259,21 @@ namespace lilac::cxx
     // ReSharper disable once CppDFAConstantFunctionResult
     bool LilacASTVisitor::TraverseCXXRecordDecl(clang::CXXRecordDecl* decl)
     {
+        const auto ns = GetNamespaceDOM(decl);
+        if (!ns) return true;
+
+        auto skip = false;
+        for (auto& child : ns->children())
+        {
+            if (child.tag().view() != "record" ||
+                child.attr()["name"].view() != decl->getNameAsString())
+                continue;
+            skip = true;
+            break;
+        }
+        if (skip)
+            return true;
+
         std::vector<frxml::dom> children;
 
         CXXRecordVisitor visitor{
@@ -274,10 +283,13 @@ namespace lilac::cxx
                 if (!GetTypeName(m_Sema, method->getLocation(), method->getReturnType().getTypePtr(), ret))
                     return;
 
+                clang::ASTNameGenerator ang(method->getASTContext());
+
                 auto dom = frxml::dom::element("", {
-                    { "name", method->getNameAsString() },
-                    { "return", ret }
-                });
+                                                   { "name", method->getNameAsString() },
+                                                   { "return", ret },
+                                                   { "mangle", ang.getName(method) }
+                                               });
                 if (clang::isa<clang::CXXConstructorDecl>(method))
                     dom.tag() = "ctor";
                 else if (clang::isa<clang::CXXDestructorDecl>(method))
@@ -290,9 +302,6 @@ namespace lilac::cxx
             }
         };
         visitor.TraverseDecl(decl);
-
-        const auto ns = GetNamespaceDOM(decl);
-        if (!ns) return true;
 
         const auto typeInfo = decl->getASTContext().getTypeInfo(decl->getTypeForDecl());
         ns->children().push_back(frxml::dom::element(
@@ -310,6 +319,22 @@ namespace lilac::cxx
     // ReSharper disable once CppDFAConstantFunctionResult
     bool LilacASTVisitor::TraverseFunctionDecl(clang::FunctionDecl* decl)
     {
+        const auto ns = GetNamespaceDOM(decl);
+        if (!ns) return true;
+
+        auto skip = false;
+        for (auto& child : ns->children())
+        {
+            if (child.tag().view() != "function" ||
+                child.attr()["name"].view() != decl->getNameAsString())
+                continue;
+            skip = true;
+            break;
+        }
+        if (skip)
+            return true;
+
+
         if (clang::isa<clang::CXXMethodDecl>(decl))
             return true;
 
@@ -317,15 +342,17 @@ namespace lilac::cxx
         if (!GetTypeName(m_Sema, decl->getLocation(), decl->getReturnType().getTypePtr(), ret))
             return true;
 
-        auto dom = frxml::dom::element("function", {
-                                           { "name", decl->getNameAsString() },
-                                           { "return", ret }
-                                       });
+        clang::ASTNameGenerator ang(decl->getASTContext());
+
+        auto dom = frxml::dom::element(
+            "function",
+            {
+                { "name", decl->getNameAsString() },
+                { "return", ret },
+                { "mangle", ang.getName(decl) }
+            });
         if (!RecordParameters(m_Sema, dom, decl))
             return true;
-
-        const auto ns = GetNamespaceDOM(decl);
-        if (!ns) return true;
 
         ns->children().push_back(dom);
         return true;
@@ -355,9 +382,3 @@ namespace lilac::cxx
         return true;
     }
 }
-
-[[maybe_unused]]
-static clang::FrontendPluginRegistry::Add<lilac::cxx::LilacAction> X(
-    "lilac-cxx-frontend",
-    "A plugin of clang-frontend for LILAC system"
-);
