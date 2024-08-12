@@ -171,14 +171,23 @@ namespace lilac::cxx
         };
         visitor.TraverseDecl(decl);
 
-        const auto underlyingT = decl->getIntegerType();
-        const auto typeName    = GetBuiltinTypeName(underlyingT.isNull()
-            ? clang::BuiltinType::Kind::Int
-            : clang::cast<clang::BuiltinType>(GetUnderlyingType(
-                    m_Sema,
-                    decl->getLocation(),
-                    underlyingT.getTypePtr())
-            )->getKind());
+        auto kind = clang::BuiltinType::Kind::Int;
+
+        if (const auto underlyingT = decl->getIntegerType(); !underlyingT.isNull())
+        {
+            const auto type = underlyingT->getUnqualifiedDesugaredType();
+            if (!type->isBuiltinType())
+            {
+                static auto err = m_Diag.getCustomDiagID(
+                    Level::Error,
+                    "Couldn't use non-builtin type as enumeration type");
+                m_Sema.Diag(decl->getLocation(), err);
+
+                return true;
+            }
+
+            kind = clang::cast<clang::BuiltinType>(type)->getKind();
+        }
 
         const auto ns = GetNamespaceDOM(decl);
         if (!ns) return true;
@@ -186,7 +195,7 @@ namespace lilac::cxx
             "enum",
             {
                 { "name", decl->getNameAsString() },
-                { "type", typeName }
+                { "type", GetBuiltinTypeName(kind) }
             },
             children
         ));
