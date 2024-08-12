@@ -1,5 +1,5 @@
+#include "exportattr.h"
 #include "pch.h"
-#include "declserializer.h"
 
 #define WARNMSG "; exporting skipped!"
 
@@ -94,34 +94,6 @@ namespace
         sema.Diag(decl->getLocation(), invalidAccess);
         return false;
     }
-
-    bool ExportAccessor(
-        clang::Sema&             sema,
-        const clang::ParsedAttr& attr,
-        clang::CXXRecordDecl*    record,
-        clang::MSPropertyDecl*   property,
-        clang::FunctionDecl*     accessor)
-    {
-        if (!accessor)
-        {
-            const auto accessorNotFound = sema.getDiagnostics().getCustomDiagID(
-                clang::DiagnosticsEngine::Warning,
-                "'%0' (required by '%1') is not a member of '%2'" WARNMSG);
-            sema.Diag(attr.getLoc(), accessorNotFound)
-                << property->getGetterId()
-                << property
-                << record;
-            return false;
-        }
-        accessor->addAttr(clang::AnnotateAttr::Create(
-            sema.Context,
-            lilac::cxx::ExportAttrInfo::AttrMangling,
-            nullptr,
-            0
-        ));
-
-        return true;
-    }
 }
 
 namespace lilac::cxx
@@ -151,12 +123,11 @@ namespace lilac::cxx
          * Ensure whether the declaration can be exported                       *
          ************************************************************************/
         if (!clang::isa<clang::FunctionDecl>(decl) &&
-            !clang::isa<clang::MSPropertyDecl>(decl) &&
             !clang::isa<clang::RecordDecl>(decl))
         {
             const auto invalidDeclType = sema.getDiagnostics().getCustomDiagID(
                 clang::DiagnosticsEngine::Warning,
-                "'%0' attribute can be applied to only functions, records and properties" WARNMSG);
+                "'%0' attribute can be applied to only functions and records" WARNMSG);
 
             sema.Diag(attr.getLoc(), invalidDeclType) << attr;
             return false;
@@ -183,50 +154,11 @@ namespace lilac::cxx
 
         if (auto* const record = clang::dyn_cast<clang::RecordDecl>(decl))
         {
-            record->addAttr(clang::AnnotateTypeAttr::Create(
-                sema.Context,
-                AttrMangling,
-                nullptr,
-                0
-            ));
-        }
-        else if (auto* const property = clang::dyn_cast<clang::MSPropertyDecl>(decl))
-        {
-            auto* const parent = clang::dyn_cast<clang::CXXRecordDecl>(property->getDeclContext());
-            if (!parent)
-            {
-                const auto invalidParent = sema.getDiagnostics().getCustomDiagID(
-                    clang::DiagnosticsEngine::Warning,
-                    "'%0' property must be in CXXRecordDecl to export" WARNMSG);
-                sema.Diag(attr.getLoc(), invalidParent) << property;
-                return AttributeNotApplied;
-            }
-
-            if (!ExportAccessor(
-                    sema, attr, parent, property,
-                    FindMethod(parent, property->getSetterId()->getName().str())) ||
-                !ExportAccessor(
-                    sema, attr, parent, property,
-                    FindMethod(parent, property->getSetterId()->getName().str())))
-            {
-                return AttributeNotApplied;
-            }
-
-            property->addAttr(clang::AnnotateAttr::Create(
-                sema.Context,
-                AttrMangling,
-                nullptr,
-                0
-            ));
+            record->addAttr(clang::AnnotateTypeAttr::Create(sema.Context, AttrMangling, nullptr, 0));
         }
         else if (auto* const function = clang::dyn_cast<clang::FunctionDecl>(decl))
         {
-            function->addAttr(clang::AnnotateAttr::Create(
-                sema.Context,
-                AttrMangling + GetDisplayPath(function) + GetFunctionTypeReg(function),
-                nullptr,
-                0
-            ));
+            function->addAttr(clang::AnnotateAttr::Create(sema.Context, AttrMangling, nullptr, 0));
         }
         else
         {
