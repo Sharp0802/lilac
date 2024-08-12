@@ -93,32 +93,64 @@ namespace lilac::cxx
     {
     }
 
-    const clang::Type* GetUnderlyingType(clang::Sema& sema, clang::SourceLocation loc, const clang::Type* t)
+    bool ShouldBeExported(clang::NamedDecl* decl)
     {
-        while (true)
-        {
-            if (const auto usingT = clang::dyn_cast<clang::UsingType>(t))
-                t = usingT->getUnderlyingType().getTypePtr();
-            else if (const auto decltypeT = clang::dyn_cast<clang::DecltypeType>(t))
-                t = decltypeT->getUnderlyingType().getTypePtr();
-            else if (const auto macroT = clang::dyn_cast<clang::MacroQualifiedType>(t))
-                t = macroT->getUnderlyingType().getTypePtr();
-            else if (clang::isa<clang::TypedefType>(t))
-            {
-                static auto err = sema.getDiagnostics().getCustomDiagID(
-                    clang::DiagnosticsEngine::Error,
-                    "Couldn't retrieve underlying type from typedef declaration");
-                sema.Diag(loc, err);
-                return nullptr;
-            }
+        auto exported = false;
 
-            return t;
+        if (clang::isa<clang::RecordDecl>(decl))
+        {
+            for (const auto attr: decl->attrs())
+            {
+                if (const auto anot = clang::dyn_cast<clang::AnnotateTypeAttr>(attr);
+                    !anot || anot->getAnnotation() != ExportAttrInfo::AttrMangling)
+                    continue;
+
+                exported = true;
+                break;
+            }
         }
+        else
+        {
+            for (const auto attr: decl->attrs())
+            {
+                if (const auto anot = clang::dyn_cast<clang::AnnotateAttr>(attr);
+                    !anot || anot->getAnnotation() != ExportAttrInfo::AttrMangling)
+                    continue;
+
+                exported = true;
+                break;
+            }
+        }
+
+        return exported;
+    }
+
+    bool LilacASTVisitor::IsDuplicated(clang::NamedDecl* decl, const std::string& tag)
+    {
+        const auto ns = GetNamespaceDOM(decl);
+        if (!ns) return true;
+
+        auto skip = false;
+        for (auto& child: ns->children())
+        {
+            if (child.tag().view() != tag ||
+                child.attr()["name"].view() != decl->getNameAsString())
+                continue;
+            skip = true;
+            break;
+        }
+
+        return skip;
     }
 
     // ReSharper disable once CppDFAConstantFunctionResult
     bool LilacASTVisitor::TraverseEnumDecl(clang::EnumDecl* decl)
     {
+        if (!ShouldBeExported(decl))
+            return true;
+        if (IsDuplicated(decl, "record"))
+            return true;
+
         std::vector<frxml::dom> children;
 
         EnumVisitor visitor{
@@ -256,56 +288,6 @@ namespace lilac::cxx
         }
 
         return true;
-    }
-
-    bool ShouldBeExported(clang::NamedDecl* decl)
-    {
-        auto exported = false;
-
-        if (clang::isa<clang::RecordDecl>(decl))
-        {
-            for (const auto attr: decl->attrs())
-            {
-                if (const auto anot = clang::dyn_cast<clang::AnnotateTypeAttr>(attr);
-                    !anot || anot->getAnnotation() != ExportAttrInfo::AttrMangling)
-                    continue;
-
-                exported = true;
-                break;
-            }
-        }
-        else
-        {
-            for (const auto attr: decl->attrs())
-            {
-                if (const auto anot = clang::dyn_cast<clang::AnnotateAttr>(attr);
-                    !anot || anot->getAnnotation() != ExportAttrInfo::AttrMangling)
-                    continue;
-
-                exported = true;
-                break;
-            }
-        }
-
-        return exported;
-    }
-
-    bool LilacASTVisitor::IsDuplicated(clang::NamedDecl* decl, const std::string& tag)
-    {
-        const auto ns = GetNamespaceDOM(decl);
-        if (!ns) return true;
-
-        auto skip = false;
-        for (auto& child: ns->children())
-        {
-            if (child.tag().view() != tag ||
-                child.attr()["name"].view() != decl->getNameAsString())
-                continue;
-            skip = true;
-            break;
-        }
-
-        return skip;
     }
 
     // ReSharper disable once CppDFAConstantFunctionResult
