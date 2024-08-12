@@ -31,16 +31,66 @@ namespace lilac::cxx
         visitor.TraverseDecl(context.getTranslationUnitDecl());
     }
 
+    frxml::dom* LilacASTVisitor::GetNamespaceDOM(clang::NamedDecl* decl)
+    {
+        const auto ctx = decl->getDeclContext();
+
+        if (ctx->getParent()->getDeclKind() != clang::Decl::Namespace)
+        {
+            static auto err = m_Diag.getCustomDiagID(
+                Level::Error,
+                "Couldn't handle a nested declaration");
+
+            m_Sema.Diag(decl->getLocation(), err);
+
+            return nullptr;
+        }
+
+        std::stack<clang::NamespaceDecl*> stk;
+        for (
+            auto cur = ctx->getParent();
+            cur != nullptr && cur->getDeclKind() == clang::Decl::Namespace;
+            cur = cur->getParent())
+        {
+            stk.emplace(clang::cast<clang::NamespaceDecl>(cur));
+        }
+
+        frxml::dom* cur = &m_Root;
+        for (; !stk.empty(); stk.pop())
+        {
+            frxml::dom* node = nullptr;
+
+            auto ns = stk.top()->getNameAsString();
+            for (auto& child: cur->children())
+            {
+                if (child.tag().view() != "namespace")
+                    continue;
+                if (child.attr()["name"].view() == ns)
+                    node = &child;
+            }
+            if (!node)
+            {
+                node = &cur->children().emplace_back(frxml::dom::element(
+                    "namespace",
+                    { { "name", ns } }));
+            }
+
+            cur = node;
+        }
+
+        return cur;
+    }
+
     LilacASTVisitor::LilacASTVisitor(clang::Sema& sema, clang::TranslationUnitDecl* unit)
         : m_Sema(sema),
-          m_Diag(m_Sema.getDiagnostics())
+          m_Diag(m_Sema.getDiagnostics()),
+          m_Root(frxml::dom::element("assembly"))
     {
         const auto rOpt = llvm::cl::getRegisteredOptions().lookup("o");
-        const auto opt  = dynamic_cast<llvm::cl::opt<std::string>*>(rOpt);
 
-        if (!opt)
+        if (const auto opt = dynamic_cast<llvm::cl::opt<std::string>*>(rOpt); !opt)
         {
-            auto err = m_Diag.getCustomDiagID(
+            const auto err = m_Diag.getCustomDiagID(
                 Level::Fatal,
                 "Couldn't get output file name; Did you specified '-o' option?");
             m_Sema.Diag(unit->getLocation(), err);
@@ -56,22 +106,28 @@ namespace lilac::cxx
         if (m_OutputFilename.empty())
             return;
 
-        // TODO : Serialize into XML
+        std::ofstream ofs(m_OutputFilename + ".xml");
+        ofs << static_cast<std::string>(frxml::doc{ m_Root });
     }
 
-    const clang::Type* GetUnderlyingType(const clang::Type* t)
+    const clang::Type* GetUnderlyingType(clang::Sema& sema, clang::SourceLocation loc, const clang::Type* t)
     {
         while (true)
         {
-            if (auto usingT = clang::dyn_cast<clang::UsingType>(t))
+            if (const auto usingT = clang::dyn_cast<clang::UsingType>(t))
                 t = usingT->getUnderlyingType().getTypePtr();
-            else if (auto decltypeT = clang::dyn_cast<clang::DecltypeType>(t))
+            else if (const auto decltypeT = clang::dyn_cast<clang::DecltypeType>(t))
                 t = decltypeT->getUnderlyingType().getTypePtr();
             else if (auto macroT = clang::dyn_cast<clang::MacroQualifiedType>(t))
                 t = macroT->getUnderlyingType().getTypePtr();
-            else if (auto typedefT = clang::dyn_cast<clang::TypedefType>(t))
-                // TODO
+            else if (clang::isa<clang::TypedefType>(t))
+            {
+                static auto err = sema.getDiagnostics().getCustomDiagID(
+                    clang::DiagnosticsEngine::Error,
+                    "Couldn't retrieve underlying type from typedef declaration");
+                sema.Diag(loc, err);
                 return nullptr;
+            }
 
             return t;
         }
@@ -92,7 +148,7 @@ namespace lilac::cxx
                 children.push_back(frxml::dom::element(
                     "constant",
                     {
-                        { "name", constant->getName() },
+                        { "name", constant->getNameAsString() },
                         { "value", valueStr }
                     }));
             }
@@ -102,13 +158,18 @@ namespace lilac::cxx
         const auto underlyingT = decl->getIntegerType();
         const auto typeName    = GetBuiltinTypeName(underlyingT.isNull()
             ? clang::BuiltinType::Kind::Int
-            : clang::cast<clang::BuiltinType>(GetUnderlyingType(underlyingT.getTypePtr()))->getKind());
+            : clang::cast<clang::BuiltinType>(GetUnderlyingType(
+                    m_Sema,
+                    decl->getLocation(),
+                    underlyingT.getTypePtr())
+            )->getKind());
 
-        // TODO : Preserve namespace information
-        m_Decls.push_back(frxml::dom::element(
+        const auto ns = GetNamespaceDOM(decl);
+        if (!ns) return true;
+        ns->children().push_back(frxml::dom::element(
             "enum",
             {
-                { "name", decl->getName() },
+                { "name", decl->getNameAsString() },
                 { "type", typeName }
             },
             children
@@ -128,13 +189,14 @@ namespace lilac::cxx
         };
         visitor.TraverseDecl(decl);
 
-        const auto typeInfo = decl->getASTContext().getTypeInfo(decl->getTypeForDecl());
+        const auto ns = GetNamespaceDOM(decl);
+        if (!ns) return true;
 
-        // TODO : Preserve namespace information
-        m_Decls.push_back(frxml::dom::element(
+        const auto typeInfo = decl->getASTContext().getTypeInfo(decl->getTypeForDecl());
+        ns->children().push_back(frxml::dom::element(
             "record",
             {
-                { "name", decl->getName() },
+                { "name", decl->getNameAsString() },
                 { "size", std::to_string(typeInfo.Width / 8) },
                 { "align", std::to_string(typeInfo.Align) }
             },
