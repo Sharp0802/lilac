@@ -315,29 +315,35 @@ namespace lilac::cxx
                 if (!ShouldBeExported(method))
                     return;
 
-                std::string ret;
-                if (!GetTypeName(m_Sema, method->getLocation(), method->getReturnType().getTypePtr(), ret))
-                    return;
-
                 clang::ASTNameGenerator ang(method->getASTContext());
 
-                auto dom = frxml::dom::element("", {
-                                                   { "name", method->getNameAsString() },
-                                                   { "return", ret },
-                                                   { "mangle", ang.getName(method) }
-                                               });
+                auto dom = frxml::dom::element("", { { "mangle", ang.getName(method) } });
                 if (clang::isa<clang::CXXConstructorDecl>(method))
                     dom.tag() = "ctor";
                 else if (clang::isa<clang::CXXDestructorDecl>(method))
-                    dom.tag() = "dtor";
+                    return;
                 else
+                {
+                    std::string ret;
+                    if (!GetTypeName(m_Sema, method->getLocation(), method->getReturnType().getTypePtr(), ret))
+                        return;
+
                     dom.tag() = static_cast<std::string>(method->isStatic() ? "function" : "method");
+                    dom.attr().emplace("name", method->getNameAsString());
+                    dom.attr().emplace("return", ret);
+                }
                 RecordParameters(m_Sema, dom, method);
 
                 children.push_back(dom);
             }
         };
         visitor.TraverseDecl(decl);
+
+        if (const auto dtor = decl->getDestructor())
+        {
+            clang::ASTNameGenerator dtorANG(dtor->getASTContext());
+            children.push_back(frxml::dom::element("dtor", { { "mangle", dtorANG.getName(dtor) } }));
+        }
 
         const auto ns = GetNamespaceDOM(decl);
         if (!ns) return true;
