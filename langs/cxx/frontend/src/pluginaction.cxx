@@ -37,7 +37,7 @@ namespace lilac::cxx
     {
         const auto ctx = decl->getDeclContext();
 
-        if (const auto parent = ctx->getParent();
+        if (const auto parent = ctx;
             parent &&
             parent->getDeclKind() != clang::Decl::Namespace &&
             parent->getDeclKind() != clang::Decl::TranslationUnit)
@@ -53,7 +53,7 @@ namespace lilac::cxx
 
         std::stack<clang::NamespaceDecl*> stk;
         for (
-            auto cur = ctx->getParent();
+            auto cur = ctx;
             cur != nullptr && cur->getDeclKind() == clang::Decl::Namespace;
             cur = cur->getParent())
         {
