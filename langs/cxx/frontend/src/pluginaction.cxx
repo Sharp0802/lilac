@@ -303,6 +303,48 @@ namespace lilac::cxx
         return true;
     }
 
+    std::optional<frxml::dom> RecordFunction(
+        clang::Sema& sema,
+        clang::FunctionDecl* fn)
+    {
+        static std::map<clang::Decl::Kind, std::string> tagMap = {
+            { clang::Decl::CXXMethod, "method" },
+            { clang::Decl::CXXConstructor, "ctor" },
+            { clang::Decl::CXXDestructor, "dtor" }
+        };
+        std::string tag = "function";
+        if (tagMap.contains(fn->getKind()))
+            tag = tagMap[fn->getKind()];
+
+        const auto proto = fn->getType()->getAs<clang::FunctionProtoType>();
+        const auto callconv = clang::FunctionType::getNameForCallConv(proto->getCallConv());
+
+        clang::ASTNameGenerator ang(fn->getASTContext());
+
+        auto dom = frxml::dom::element(
+            tag,
+            {
+                { "mangle", ang.getName(fn) },
+                { "callconv", callconv.str() }
+            });
+
+        if (fn->getKind() != clang::Decl::CXXConstructor &&
+            fn->getKind() != clang::Decl::CXXDestructor)
+        {
+            std::string ret;
+            if (!GetTypeName(sema, fn->getLocation(), fn->getReturnType().getTypePtr(), ret))
+                return std::nullopt;
+
+            dom.attr().emplace("name", fn->getNameAsString());
+            dom.attr().emplace("return", ret);
+        }
+
+        if (!RecordParameters(sema, dom, fn))
+            return std::nullopt;
+
+        return dom;
+    }
+
     // ReSharper disable once CppDFAConstantFunctionResult
     bool LilacASTVisitor::TraverseCXXRecordDecl(clang::CXXRecordDecl* decl)
     {
@@ -313,40 +355,40 @@ namespace lilac::cxx
 
         std::vector<frxml::dom> children;
 
+        static auto recordErr = m_Sema.getDiagnostics().getCustomDiagID(
+            Level::Error,
+            "CXXMethod cannot be exported");
+
+        // Record member functions including constructors/destructor
         CXXRecordVisitor visitor{
             [&](clang::CXXMethodDecl* method)
             {
                 if (!ShouldBeExported(method))
                     return;
 
-                clang::ASTNameGenerator ang(method->getASTContext());
-
-                auto dom = frxml::dom::element("", { { "mangle", ang.getName(method) } });
-                if (clang::isa<clang::CXXConstructorDecl>(method))
-                    dom.tag() = "ctor";
-                else if (clang::isa<clang::CXXDestructorDecl>(method))
-                    return;
-                else
+                const auto dom = RecordFunction(m_Sema, method);
+                if (!dom)
                 {
-                    std::string ret;
-                    if (!GetTypeName(m_Sema, method->getLocation(), method->getReturnType().getTypePtr(), ret))
-                        return;
-
-                    dom.tag() = static_cast<std::string>(method->isStatic() ? "function" : "method");
-                    dom.attr().emplace("name", method->getNameAsString());
-                    dom.attr().emplace("return", ret);
+                    m_Sema.Diag(method->getLocation(), recordErr);
+                    return;
                 }
-                RecordParameters(m_Sema, dom, method);
 
-                children.push_back(dom);
+                children.push_back(dom.value());
             }
         };
         visitor.TraverseDecl(decl);
 
+        // Record implicit destructor
         if (const auto dtor = decl->getDestructor())
         {
-            clang::ASTNameGenerator dtorANG(dtor->getASTContext());
-            children.push_back(frxml::dom::element("dtor", { { "mangle", dtorANG.getName(dtor) } }));
+            const auto dom = RecordFunction(m_Sema, dtor);
+            if (!dom)
+            {
+                m_Sema.Diag(dtor->getLocation(), recordErr);
+                return false;
+            }
+
+            children.push_back(dom.value());
         }
 
         const auto ns = GetNamespaceDOM(decl);
@@ -387,26 +429,20 @@ namespace lilac::cxx
         if (IsDuplicated(decl, "function"))
             return true;
 
-        std::string ret;
-        if (!GetTypeName(m_Sema, decl->getLocation(), decl->getReturnType().getTypePtr(), ret))
-            return true;
-
-        clang::ASTNameGenerator ang(decl->getASTContext());
-
-        auto dom = frxml::dom::element(
-            "function",
-            {
-                { "name", decl->getNameAsString() },
-                { "return", ret },
-                { "mangle", ang.getName(decl) }
-            });
-        if (!RecordParameters(m_Sema, dom, decl))
-            return true;
+        const auto dom = RecordFunction(m_Sema, decl);
+        if (!dom)
+        {
+            static auto err = m_Sema.getDiagnostics().getCustomDiagID(
+                Level::Error,
+                "FunctionDecl cannot be exported");
+            m_Sema.Diag(decl->getLocation(), err);
+            return false;
+        }
 
         const auto ns = GetNamespaceDOM(decl);
         if (!ns) return true;
 
-        ns->children().push_back(dom);
+        ns->children().push_back(dom.value());
         return true;
     }
 
