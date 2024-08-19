@@ -133,8 +133,12 @@ namespace lilac::cxx
         auto skip = false;
         for (auto& child: ns->children())
         {
+            const auto name = clang::isa<clang::FunctionDecl>(decl)
+                ? clang::ASTNameGenerator(decl->getASTContext()).getName(decl)
+                : decl->getNameAsString();
+
             if (child.tag().view() != tag ||
-                child.attr()["name"].view() != decl->getNameAsString())
+                child.attr()["name"].view() != name)
                 continue;
             skip = true;
             break;
