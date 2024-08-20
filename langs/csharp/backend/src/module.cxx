@@ -91,6 +91,8 @@ std::string CreatePInvokeStub(const frxml::dom& dom, int indentC, bool _this)
         ref << dom.children()[i].attr().at("name").view();
     }
 
+    auto ret = ResolveTypeRef(static_cast<std::string>(dom.attr().at("return").view()));
+
     std::stringstream sst;
     if (_this)
         sst << indent << "fixed (void* p = __data)\n"
@@ -99,7 +101,7 @@ std::string CreatePInvokeStub(const frxml::dom& dom, int indentC, bool _this)
         sst << indent << "__PInvoke(" << ref.str() << ");\n\n";
     sst << indent << "[System.Runtime.InteropServices.DllImport(\""
         << LibraryName << "\", EntryPoint=\"" << dom.attr().at("mangle").view() << "\", ExactSpelling=true)]\n"
-        << indent << "static extern " << dom.attr().at("return").view() << " __PInvoke(";
+        << indent << "static extern " << ret << " __PInvoke(";
     if (_this)
         sst << "void* @this, ";
     sst << prm.str() << ");\n";
@@ -197,7 +199,7 @@ void Traverse(std::ostream& ost, const frxml::dom& parent, const frxml::dom& dom
             Traverse(params, dom, dom.children()[i], 0);
         }
 
-        const auto ret  = dom.attr().at("return").view();
+        const auto ret  = ResolveTypeRef(static_cast<std::string>(dom.attr().at("return").view()));
         const auto name = dom.attr().at("name").view();
 
         ost << indent << "public static " << ret << ' ' << name << '(' << params.str() << ");\n"
@@ -269,28 +271,6 @@ MODULE(csharp)
     try
     {
         std::ofstream ofs(outPath);
-
-        ofs << R"(
-using __void  = void;
-using __bool  = bool;
-using __u8    = byte;
-using __u16   = ushort;
-using __u32   = uint;
-using __uptr  = nuint;
-using __u64   = ulong;
-using __u128  = System.UInt128;
-using __s8    = sbyte;
-using __s16   = short;
-using __s32   = int;
-using __sptr  = nint;
-using __s64   = long;
-using __s128  = System.Int128;
-using __fp16  = System.Half;
-using __fp32  = float;
-using __fp64  = double;
-//using __fp128 = <unsupported>;
-)";
-
         for (auto& child: doc.root().children())
         {
             ofs << '\n';
