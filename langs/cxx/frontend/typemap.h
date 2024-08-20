@@ -100,31 +100,31 @@ namespace lilac::cxx
 #define CASE___(a, ...) case clang::BuiltinType::Kind::a: __VA_OPT__(CASE__(__VA_ARGS__))
 #define CASE__(a, ...) case clang::BuiltinType::Kind::a: __VA_OPT__(CASE___(__VA_ARGS__))
 #define CASE_(name, ...) CASE__(__VA_ARGS__) return name
-            CASE_("void", Void);
-            CASE_("bool", Bool);
-            CASE_("u8", Char_U);
-            CASE_("u8", UChar);
-            CASE_("u16", WChar_U);
-            CASE_("u8", Char8);
-            CASE_("u16", Char16);
-            CASE_("u32", Char32);
-            CASE_("u16", UShort);
-            CASE_("u32", UInt);
-            CASE_("uptr", ULong);
-            CASE_("u64", ULongLong);
-            CASE_("u128", UInt128);
-            CASE_("s8", Char_S, SChar);
-            CASE_("s16", WChar_S);
-            CASE_("s16", Short);
-            CASE_("s32", Int);
-            CASE_("sptr", Long);
-            CASE_("s64", LongLong);
-            CASE_("s128", Int128);
-            CASE_("fp16", Half);
-            CASE_("fp32", Float);
-            CASE_("fp64", Double);
-            CASE_("fp16", Float16);
-            CASE_("fp128", Float128);
+            CASE_("__void", Void);
+            CASE_("__bool", Bool);
+            CASE_("__u8", Char_U);
+            CASE_("__u8", UChar);
+            CASE_("__u16", WChar_U);
+            CASE_("__u8", Char8);
+            CASE_("__u16", Char16);
+            CASE_("__u32", Char32);
+            CASE_("__u16", UShort);
+            CASE_("__u32", UInt);
+            CASE_("__uptr", ULong);
+            CASE_("__u64", ULongLong);
+            CASE_("__u128", UInt128);
+            CASE_("__s8", Char_S, SChar);
+            CASE_("__s16", WChar_S);
+            CASE_("__s16", Short);
+            CASE_("__s32", Int);
+            CASE_("__sptr", Long);
+            CASE_("__s64", LongLong);
+            CASE_("__s128", Int128);
+            CASE_("__fp16", Half);
+            CASE_("__fp32", Float);
+            CASE_("__fp64", Double);
+            CASE_("__fp16", Float16);
+            CASE_("__fp128", Float128);
 #undef CASE_
 #undef CASE__
 #undef CASE___
