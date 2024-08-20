@@ -123,7 +123,8 @@ namespace lilac::cxx
          * Ensure whether the declaration can be exported                       *
          ************************************************************************/
         if (!clang::isa<clang::FunctionDecl>(decl) &&
-            !clang::isa<clang::RecordDecl>(decl))
+            !clang::isa<clang::RecordDecl>(decl) &&
+            !clang::isa<clang::EnumDecl>(decl))
         {
             const auto invalidDeclType = sema.getDiagnostics().getCustomDiagID(
                 clang::DiagnosticsEngine::Warning,
@@ -152,9 +153,9 @@ namespace lilac::cxx
             return AttributeNotApplied;
         }
 
-        if (auto* const record = clang::dyn_cast<clang::RecordDecl>(decl))
+        if (auto* const tag = clang::dyn_cast<clang::TagDecl>(decl))
         {
-            record->addAttr(clang::AnnotateTypeAttr::Create(sema.Context, AttrMangling, nullptr, 0));
+            tag->addAttr(clang::AnnotateTypeAttr::Create(sema.Context, AttrMangling, nullptr, 0));
         }
         else if (auto* const function = clang::dyn_cast<clang::FunctionDecl>(decl))
         {

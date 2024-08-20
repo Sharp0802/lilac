@@ -97,7 +97,7 @@ namespace lilac::cxx
     {
         auto exported = false;
 
-        if (clang::isa<clang::RecordDecl>(decl))
+        if (clang::isa<clang::TagDecl>(decl))
         {
             for (const auto attr: decl->attrs())
             {
@@ -152,7 +152,7 @@ namespace lilac::cxx
     {
         if (!ShouldBeExported(decl))
             return true;
-        if (IsDuplicated(decl, "record"))
+        if (IsDuplicated(decl, "enum"))
             return true;
 
         std::vector<frxml::dom> children;
@@ -313,7 +313,7 @@ namespace lilac::cxx
             { clang::Decl::CXXDestructor, "dtor" }
         };
         std::string tag = "function";
-        if (tagMap.contains(fn->getKind()))
+        if (!fn->isStatic() && tagMap.contains(fn->getKind()))
             tag = tagMap[fn->getKind()];
 
         const auto proto = fn->getType()->getAs<clang::FunctionProtoType>();
