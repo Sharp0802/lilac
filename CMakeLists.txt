@@ -14,5 +14,5 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 include_directories(${CMAKE_SOURCE_DIR})
 
-add_subdirectory(sub/frxml/frxml)
 add_subdirectory(langs)
+add_subdirectory(sub/frxml/frxml)
