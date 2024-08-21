@@ -114,7 +114,7 @@ void Traverse(std::ostream& ost, const frxml::dom& parent, const frxml::dom& dom
 
     if (dom.tag().view() == "namespace")
     {
-        ost << indent << "namespace " << dom.attr().at("name").view() << '\n'
+        ost << indent << "public static class " << dom.attr().at("name").view() << '\n'
             << indent << "{\n";
         for (auto i = 0; i < dom.children().size(); ++i)
         {
@@ -180,18 +180,6 @@ void Traverse(std::ostream& ost, const frxml::dom& parent, const frxml::dom& dom
     }
     else if (dom.tag().view() == "function")
     {
-        if (parent.tag().view() != "record")
-        {
-            ost << indent << "public partial struct __\n"
-                << indent << "{\n";
-
-            Traverse(ost, frxml::dom::element("record"), dom, indentC + 1);
-
-            ost << indent << "}\n";
-
-            return;
-        }
-
         std::stringstream params;
         for (auto i = 0; i < dom.children().size(); ++i)
         {
