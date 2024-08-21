@@ -95,16 +95,23 @@ std::string CreatePInvokeStub(const frxml::dom& dom, int indentC, bool _this)
 
     std::stringstream sst;
     if (_this)
+    {
         sst << indent << "fixed (void* p = __data)\n"
-            << indent << "\t__PInvoke(p, " << ref.str() << ");\n";
+            << indent << "\t__PInvoke(p";
+        if (ref.str().size() > 0)
+            sst << ", " << ref.str();
+        sst << ");\n";
+    }
     else
         sst << indent << "__PInvoke(" << ref.str() << ");\n\n";
     sst << indent << "[System.Runtime.InteropServices.DllImport(\""
         << LibraryName << "\", EntryPoint=\"" << dom.attr().at("mangle").view() << "\", ExactSpelling=true)]\n"
         << indent << "static extern " << ret << " __PInvoke(";
     if (_this)
-        sst << "void* @this, ";
-    sst << prm.str() << ");\n";
+        sst << "void* @this";
+    if (prm.str().size() > 0)
+        sst << ", " << prm.str();
+    sst << ");\n";
     return sst.str();
 }
 
@@ -170,7 +177,7 @@ void Traverse(std::ostream& ost, const frxml::dom& parent, const frxml::dom& dom
             Traverse(params, dom, dom.children()[i], 0);
         }
 
-        const auto ret  = dom.attr().at("return").view();
+        const auto ret  = ResolveTypeRef(static_cast<std::string>(dom.attr().at("return").view()));
         const auto name = dom.attr().at("name").view();
 
         ost << indent << "public " << ret << ' ' << name << '(' << params.str() << ");\n"
