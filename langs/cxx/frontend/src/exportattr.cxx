@@ -128,7 +128,7 @@ namespace lilac::cxx
         {
             const auto invalidDeclType = sema.getDiagnostics().getCustomDiagID(
                 clang::DiagnosticsEngine::Warning,
-                "'%0' attribute can be applied to only functions and records" WARNMSG);
+                "'%0' attribute can be applied to only functions, enumerations and records" WARNMSG);
 
             sema.Diag(attr.getLoc(), invalidDeclType) << attr;
             return false;
