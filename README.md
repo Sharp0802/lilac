@@ -1,4 +1,4 @@
-# Welcome to LILAC
+# :sparkles: Welcome to LILAC
 
 ![](https://img.shields.io/github/license/Sharp0802/lilac)
 ![](https://img.shields.io/github/repo-size/Sharp0802/lilac)
@@ -24,12 +24,12 @@ But, with power of LLVM, we hope that LILAC will generate bindings between C++ a
 
 **Let's break down language barrier!**
 
-## Supported Languages
+## :globe_with_meridians: Supported Languages
 
 | Language |      Backend       |      Frontend      |
 |:--------:|:------------------:|:------------------:|
-|   C++    | :grey_exclamation: |   :interrobang:    |
-|    C#    |   :interrobang:    | :grey_exclamation: |
+|   C++    | :grey_exclamation: |        :o:         |
+|    C#    |        :o:         | :grey_exclamation: |
 
 - :o: : Implemented.
 - :grey_exclamation: : Not implemented, but planned.
@@ -120,6 +120,6 @@ That library name can be specified by `-l` option.
 
 So, build result of your C++ project should be `libtest.dll` or `test.dll` or `libtest.so` or `test.so` etc...
 
-## Docs
+## :memo: Docs
 
 - [INFRASTRUCTURE SPEC](docs/INFRASTRUCTURE.md)
