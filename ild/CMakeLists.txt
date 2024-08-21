@@ -2,7 +2,7 @@ project(ild)
 set(VERSION 0.0.1)
 
 set(BACKENDS
-    lilac-csharp-backend
+        lilac-csharp-backend
 )
 
 file(GLOB_RECURSE SOURCES src/*.cxx)
