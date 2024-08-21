@@ -17,16 +17,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-//
-// Created by sharp0802 on 8/21/24.
-//
-
 #pragma once
 
 #include "shared/backend.h"
 
 namespace lilac::csharp
 {
+    /**
+     * @brief An action that generates C# bridge of given interface representation using P/Invoke
+     */
     class CSharpBackendAction final : public shared::BackendAction
     {
     public:
