@@ -5,7 +5,7 @@ left to right direction
 package Frontend 
 {
     object Wrapper
-    object IH
+    object Interface
 }
 
 package Backend
@@ -18,9 +18,9 @@ object "Language Runtime" as RT
 object Host
 
 Source --> Wrapper
-Source --> IH
+Source --> Interface
 
-IH --> Bridge
+Interface --> Bridge
 
 Bridge <-[#2222FF]- Host
 Wrapper <-[#2222FF]- Bridge
@@ -37,11 +37,11 @@ left to right direction
 object A
 object "Wrapper(A)" as wA
 object "Bridge(A)" as bA
-object "IH(A)" as ihA
+object "Interface Representation(A)" as ihA
 
 object B
 object "Wrapper(B)" as wB
-object "IH(B)" as ihB
+object "Interface Representation(B)" as ihB
 object "Bridge(B)" as bB
 
 object "Init Process" as I
@@ -70,7 +70,7 @@ left to right direction
 package Frontend 
 {
     object "Shared Object (*.dll/*.so)" as Wrapper
-    object IH
+    object "Interface Representation" as IH
 }
 
 package Backend
@@ -98,7 +98,7 @@ left to right direction
 package Frontend 
 {
     object Wrapper
-    object IH
+    object "Interface" as IH
 }
 
 package Backend
@@ -133,11 +133,11 @@ package Source
 
 package Frontend
 {
-    object "Language-specific analyzer (e.g. Roslyn)" as LSA
+    object "Language-specific compiler framework (e.g. Roslyn)" as LSA
     object "LLVM-based compiler with custom attributes" as LC
 }
 
-object "Attributed IR" as IR
+object "Interface Represenation" as IR
 
 package Backend
 {
@@ -156,9 +156,11 @@ LSA --> IR
 LL --> LC
 LC --> IR
 
-IR --> Bridge : "llc"
-
 IR --> LSCG
-LSCG --> Wrapper
+
+LC --> Wrapper
+LSA --> Wrapper
+
+LSCG --> Bridge
 
 @enduml
