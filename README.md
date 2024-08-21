@@ -35,99 +35,91 @@ But, with power of LLVM, we hope that LILAC will generate bindings between C++ a
 - :grey_exclamation: : Not implemented, but planned.
 - :interrobang: : Work in Progress
 
-## Docs
+## :tada: Getting Started
 
-- [INFRASTRUCTURE SPEC](docs/INFRASTRUCTURE.md)
+This sample describes how to create C# binding of C++ source...
 
-## Sample
+### Compile interface representation
 
-### :tada: First interface
+Your C++ source code (`test.cxx`, implementation omitted) is here:
 
 ```c++
 #include <iostream>
 
-int main()
+struct [[lilac::export]] Module
 {
-    std::cout << "Hello from C++" << std::endl;
-    return 0;
-}
-```
+    int m_Value;
 
-- XML interface representation
+    [[lilac::export]]
+    Module(int value);
 
-```xml
-<assembly>
-	<function callconv="cdecl" mangle="main" name="main" return="s32"/>
-</assembly>
-```
-
-### :bubbles: Deep dive...
-
-```c++
-#include <string>
-
-#define export [[lilac::export]]
-#define STRUCT(name, type, count, ...) struct export name { type __dummy[count]; __VA_ARGS__ };
-
-STRUCT(teststruct__align_1, char, 64)
-STRUCT(teststruct__align_2, short, 32)
-
-namespace ns__struct
-{
-    STRUCT(teststruct__align_4, int, 16)
-    STRUCT(teststruct__align_8, long long, 8)
-}
-
-class export testclass
-{
-    std::string __dummy;
-
-public:
-    testclass(char* p) : __dummy(p)
-    {
-    }
-
-    export teststruct__align_1 testfn(
-        teststruct__align_2 val,
-        ns__struct::teststruct__align_4& ref,
-        ns__struct::teststruct__align_8* ptr);
-
-    export teststruct__align_1 __vectorcall vectorcall__testfn();
+    [[lilac::export]]
+    int EntryPoint();
 };
-
-teststruct__align_1 testclass::testfn(
-    teststruct__align_2 val,
-    ns__struct::teststruct__align_4& ref,
-    ns__struct::teststruct__align_8* ptr)
-{
-    return {};
-}
-
-teststruct__align_1 __vectorcall testclass::vectorcall__testfn()
-{
-    return {};
-}
 ```
 
-- XML interface representation
+To extract interface representation from C++ source,
+You should enable `CMAKE_EXPORT_COMPILE_COMMANDS` from your `CMakeLists.txt`.
+`compile_commands.json` will be generated on build directory:
+
+```cmake
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+```
+
+Then, C++ source can be processed by `lilac-cxx`:
+
+```
+lilac-cxx -p <build-directory> -o interface.xml test.cxx
+```
+
+> [!NOTE]
+> `compile_commands.json` must be in `<build-directory>`.
+> Otherwise, processing will be failed.
+
+`interface.xml` will be generated on working directory by `lilac-cxx`:
 
 ```xml
 <assembly>
-    <record align="1" name="teststruct__align_1" size="64"/>
-    <record align="2" name="teststruct__align_2" size="64"/>
-    <namespace name="ns__struct">
-        <record align="4" name="teststruct__align_4" size="64"/>
-        <record align="8" name="teststruct__align_8" size="64"/>
-    </namespace>
-    <record align="8" name="testclass" size="32">
-        <method callconv="cdecl" mangle="_ZN9testclass6testfnE19teststruct__align_2RN10ns__struct19teststruct__align_4EPNS1_19teststruct__align_8E" name="testfn" return="teststruct__align_1">
-            <param name="val" type="teststruct__align_2"/>
-            <param name="ref" type="ns__struct/teststruct__align_4*"/>
-            <param name="ptr" type="ns__struct/teststruct__align_8*"/>
-        </method>
-        <method callconv="vectorcall" mangle="_ZN9testclass18vectorcall__testfnEv" name="vectorcall__testfn" return="teststruct__align_1"/>
-        <dtor callconv="cdecl" mangle="_ZN9testclassD1Ev"/>
+    <record align="4" name="Module" size="4">
+        <method callconv="cdecl" mangle="_ZN6Module10EntryPointEv" name="EntryPoint" return="__s32"/>
     </record>
 </assembly>
+```
+
+### Create C# Binding
+
+Using `interface.xml` and `ild` (*interface link editor*),
+You can create C# binding:
 
 ```
+ild --module=csharp -i interface.xml -l test -o test.cs
+```
+
+Using the interface representation file specified by `-i` option,
+C# binding will be placed on `test.cs` by `ild`:
+
+```c#
+public struct Module
+{
+	private byte __data[4];
+	public int EntryPoint();
+	{
+		fixed (void* p = __data)
+			__PInvoke(p);
+		[System.Runtime.InteropServices.DllImport("test", EntryPoint="_ZN6Module10EntryPointEv", ExactSpelling=true)]
+		static extern int __PInvoke(void* @this);
+	}
+}
+```
+
+#### `-l` option:
+
+In C#, native interoperability comes with *P/Invoke* that requires library name to load native functions
+(Not only C#, but other languages often requires library name to load native functions).
+That library name can be specified by `-l` option.
+
+So, build result of your C++ project should be `libtest.dll` or `test.dll` or `libtest.so` or `test.so` etc...
+
+## Docs
+
+- [INFRASTRUCTURE SPEC](docs/INFRASTRUCTURE.md)
