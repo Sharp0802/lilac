@@ -206,6 +206,15 @@ void Traverse(std::ostream& ost, const frxml::dom& parent, const frxml::dom& dom
     }
     else if (dom.tag().view() == "function")
     {
+        if (parent.tag().view() == "assembly")
+        {
+            ost << indent << "public static partial class __\n"
+                << indent << "{\n";
+            Traverse(ost, frxml::dom::element("__"), dom, indentC + 1);
+            ost << indent << "}\n";
+            return;
+        }
+
         std::stringstream params;
         for (auto i = 0; i < dom.children().size(); ++i)
         {
