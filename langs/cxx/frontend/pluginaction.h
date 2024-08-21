@@ -25,16 +25,27 @@ namespace lilac::cxx
 {
     frxml::dom& GetDOMRoot();
 
+    /**
+     * @brief A frontend action that creates lilac::cxx::LilacASTConsumer to traverse AST
+     */
     class LilacAction final : public clang::ASTFrontendAction
     {
     public:
         std::unique_ptr<clang::ASTConsumer> CreateASTConsumer(clang::CompilerInstance&, llvm::StringRef) override;
     };
 
+    /**
+     * @brief An ASTConsumer that creates lilac::cxx::LilacASTVisitor to traverse AST
+     *
+     * An ASTConsumer that creates lilac::cxx::LilacASTVisitor to traverse AST.
+     * It injects DOM object, for interface serializing,
+     * and clang::Sema because clang::RecursiveVisitor cannot retrieve
+     * clang::Sema from compilation itself.
+     */
     class LilacASTConsumer final : public clang::SemaConsumer
     {
         clang::Sema* m_Sema = nullptr;
-        frxml::dom& m_Root;
+        frxml::dom&  m_Root;
 
     public:
         explicit LilacASTConsumer(frxml::dom& dom);
@@ -44,6 +55,12 @@ namespace lilac::cxx
         void HandleTranslationUnit(clang::ASTContext& context) override;
     };
 
+    /**
+     * @brief A recursive AST visitor that serializes C/C++ interface data into DOM object
+     *
+     * A recursive AST visitor that serializes C/C++ interface data into DOM object.
+     * DOM object and clang::Sema should be injected to serialize data properly.
+     */
     class LilacASTVisitor final : public clang::RecursiveASTVisitor<LilacASTVisitor>
     {
         using Level = clang::DiagnosticsEngine::Level;
@@ -67,6 +84,13 @@ namespace lilac::cxx
         bool TraverseFunctionDecl(clang::FunctionDecl* decl);
 
 
+        /**
+         * @brief A recursive AST visitor that traverses AST of an enumeration.
+         *
+         * A recursive AST visitor that traverses AST of an enumeration.
+         * Using passed callback, A caller can retrieve enumeration constant
+         * data of the enumeration.
+         */
         class EnumVisitor : public RecursiveASTVisitor<EnumVisitor>
         {
             std::function<void(clang::EnumConstantDecl*)> m_Delegate;
@@ -77,6 +101,12 @@ namespace lilac::cxx
             bool TraverseEnumConstantDecl(clang::EnumConstantDecl* decl);
         };
 
+        /**
+         * @brief A recursive AST visitor that traverses AST of an enumeration.
+         *
+         * A recursive AST visitor that traverses AST of an enumeration.
+         * Using passed callback, A caller can retrieve method data of the enumeration.
+         */
         class CXXRecordVisitor : public RecursiveASTVisitor<CXXRecordVisitor>
         {
             std::function<void(clang::CXXMethodDecl*)> m_Delegate;

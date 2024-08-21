@@ -23,6 +23,14 @@
 
 namespace lilac::cxx
 {
+    /**
+     * @brief A plugin making clang accepts attributes from LILAC
+     *
+     * A plugin making clang accepts attributes from LILAC such as
+     * `[[lilac::export]]` or `__attribute__((__lilac_export))`.
+     * Attributes from LILAC will be converted to
+     * `[[clang::annotate("__lilac_export")]]` by this plugin.
+     */
     class ExportAttrInfo final : public clang::ParsedAttrInfo
     {
     public:
