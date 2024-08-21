@@ -2,15 +2,15 @@
 
 ## Summary
 
-![](img/process.svg)
+![](img/process.png)
 
 - *Black line represents compile path*
 - *Blue line represents runtime call-path*
 
 ### Compile Path
 
-1. Compile IH (Intermediate Hierarchy) from source (*.jar for Java, *.dll for C#, etc...)
-2. Generate bridge from IH
+1. Compile interface representation from source (*.jar for Java, *.dll for C#, etc...)
+2. Generate bridge from interface representation
 
 ### Call Path
 
@@ -23,22 +23,22 @@
 
 For example (Use C# on C++):
 
-![](img/wrap_dotnet_with_cxx.svg)
+![](img/wrap_dotnet_with_cxx.png)
 
 However, Native languages (such as C++) doesn't have language-specific runtime:
 
-![](img/wrap_cxx_with_dotnet.svg)
+![](img/wrap_cxx_with_dotnet.png)
 
 ## Compilation Process
 
-![](img/compilation.svg)
+![](img/compilation.png)
 
 - Additional attributes describing Object-Oriented information (such as 'which class owns this function') required
   - That's because LLVM IR does not support OOP model
 
 ## Bidirectional Linkage
 
-![](img/bi-process.svg)
+![](img/bi-process.png)
 
 - *Black line represents compile path*
 - *Blue/Green line represents runtime call-path*
