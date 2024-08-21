@@ -1,13 +1,10 @@
-# :sparkles: Welcome to LILAC
+# Welcome to LILAC
 
 ![](https://img.shields.io/github/license/Sharp0802/lilac)
 ![](https://img.shields.io/github/repo-size/Sharp0802/lilac)
 ![](https://img.shields.io/github/commit-activity/m/Sharp0802/lilac)
 
-> [!IMPORTANT]
-> ***WORKING IN PROGRESS***
-
-*LILAC* is a **L**anguage to language **I**nteroperability **LA**yer **C**ompiler -
+*LILAC* is a <b>L</b>anguage to language <b>I</b>nteroperability <b>LA</b>yer <b>C</b>ompiler -
 with a goal that producing bindings across languages.
 
 Interoperability across languages always sucks developers...
@@ -24,18 +21,18 @@ But, with power of LLVM, we hope that LILAC will generate bindings between C++ a
 
 **Let's break down language barrier!**
 
-## :globe_with_meridians: Supported Languages
+## Supported Languages
 
-| Language |      Backend       |      Frontend      |
-|:--------:|:------------------:|:------------------:|
-|   C++    | :grey_exclamation: |        :o:         |
-|    C#    |        :o:         | :grey_exclamation: |
+| Language | Backend | Frontend |
+|:--------:|:-------:|:--------:|
+|   C++    |    ?    |    O     |
+|    C#    |    O    |    ?     |
 
-- :o: : Implemented.
-- :grey_exclamation: : Not implemented, but planned.
-- :interrobang: : Work in Progress
+- O : Implemented.
+- ? : Not implemented, but planned.
+- ! : Work in Progress
 
-## :tada: Getting Started
+## Getting Started
 
 This sample describes how to create C# binding of C++ source...
 
@@ -43,7 +40,7 @@ This sample describes how to create C# binding of C++ source...
 
 Your C++ source code (`test.cxx`, implementation omitted) is here:
 
-```c++
+```cpp
 #include <iostream>
 
 struct [[lilac::export]] Module
@@ -98,7 +95,7 @@ ild --module=csharp -i interface.xml -l test -o test.cs
 Using the interface representation file specified by `-i` option,
 C# binding will be placed on `test.cs` by `ild`:
 
-```c#
+```csharp
 public struct Module
 {
 	private byte __data[4];
@@ -120,6 +117,6 @@ That library name can be specified by `-l` option.
 
 So, build result of your C++ project should be `libtest.dll` or `test.dll` or `libtest.so` or `test.so` etc...
 
-## :memo: Docs
+## Docs
 
-- [INFRASTRUCTURE SPEC](docs/INFRASTRUCTURE.md)
+- [INFRASTRUCTURE SPEC](INFRASTRUCTURE.md)
