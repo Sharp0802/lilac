@@ -1,4 +1,4 @@
-if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     execute_process(
             COMMAND $ENV{SHELL} -c "which clang"
             OUTPUT_STRIP_TRAILING_WHITESPACE
