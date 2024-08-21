@@ -20,7 +20,8 @@
 #include <iostream>
 
 #include "pch.h"
-#include "csharp/module.h"
+#include "shared/backend.h"
+#include "module.h"
 
 std::string LibraryName;
 
@@ -62,23 +63,23 @@ std::string ResolveTypeRef(std::string src)
     std::string ref(refC, '*');
 
     static std::map<std::string, std::string> builtins = {
-        { "__void",  "void" },
-        { "__bool",  "bool" },
-        { "__u8",    "byte" },
-        { "__u16",   "ushort" },
-        { "__u32",   "uint" },
-        { "__uptr",  "nuint" },
-        { "__u64",   "ulong" },
-        { "__u128",  "System.UInt128" },
-        { "__s8",    "sbyte" },
-        { "__s16",   "short" },
-        { "__s32",   "int" },
-        { "__sptr",  "nint" },
-        { "__s64",   "long" },
-        { "__s128",  "System.Int128" },
-        { "__fp16",  "System.Half" },
-        { "__fp32",  "float" },
-        { "__fp64",  "double" }
+        { "__void", "void" },
+        { "__bool", "bool" },
+        { "__u8", "byte" },
+        { "__u16", "ushort" },
+        { "__u32", "uint" },
+        { "__uptr", "nuint" },
+        { "__u64", "ulong" },
+        { "__u128", "System.UInt128" },
+        { "__s8", "sbyte" },
+        { "__s16", "short" },
+        { "__s32", "int" },
+        { "__sptr", "nint" },
+        { "__s64", "long" },
+        { "__s128", "System.Int128" },
+        { "__fp16", "System.Half" },
+        { "__fp32", "float" },
+        { "__fp64", "double" }
     };
     if (builtins.contains(src))
         return builtins[src] + ref;
@@ -117,7 +118,7 @@ std::string CreatePInvokeStub(const frxml::dom& dom, int indentC, bool _this)
     {
         sst << indent << "fixed (void* p = __data)\n"
             << indent << "\t__PInvoke(p";
-        if (ref.str().size() > 0)
+        if (!ref.str().empty())
             sst << ", " << ref.str();
         sst << ");\n";
     }
@@ -128,7 +129,7 @@ std::string CreatePInvokeStub(const frxml::dom& dom, int indentC, bool _this)
         << indent << "static extern " << ret << " __PInvoke(";
     if (_this)
         sst << "void* @this";
-    if (prm.str().size() > 0)
+    if (!prm.str().empty())
         sst << ", " << prm.str();
     sst << ");\n";
     return sst.str();
@@ -256,14 +257,18 @@ void Traverse(std::ostream& ost, const frxml::dom& parent, const frxml::dom& dom
     }
 }
 
-MODULE(csharp)
+lilac::csharp::CSharpBackendAction::CSharpBackendAction(): BackendAction(shared::CSharp, "csharp", "C# backend module")
+{
+}
+
+int lilac::csharp::CSharpBackendAction::Run(std::string confPath, std::string libPath, std::string outPath) const
 {
     LibraryName = libPath;
 
     std::stringstream input;
     try
     {
-        std::ifstream ifs(xmlPath);
+        std::ifstream ifs(confPath);
         input << ifs.rdbuf();
     }
     catch (const std::ifstream::failure& e)
@@ -308,3 +313,6 @@ MODULE(csharp)
 
     return 0;
 }
+
+[[maybe_unused]]
+static lilac::csharp::CSharpBackendAction Action;

@@ -19,25 +19,10 @@
 
 #include "pch.h"
 
-#include "csharp/module.h"
 #include "shared/backend.h"
 #include "shared/version.h"
 
-enum ModuleKind
-{
-    CSharp
-};
-
 llvm::cl::OptionCategory Category("LILAC Backend Options");
-
-llvm::cl::opt<ModuleKind> Module(
-    "module",
-    llvm::cl::Required,
-    llvm::cl::cat(Category),
-    llvm::cl::desc("Load the named module"),
-    values(
-        clEnumValN(CSharp, "csharp", "C# backend module")
-    ));
 
 llvm::cl::opt<std::string> XMLPathOpt(
     "i",
@@ -58,8 +43,38 @@ llvm::cl::opt<std::string> OutPathOpt(
     llvm::cl::value_desc("file"),
     llvm::cl::desc("Place the output into <file>"));
 
+template<typename T>
+std::initializer_list<T> GetInitializerList(std::vector<T> vector)
+{
+    union
+    {
+        std::initializer_list<T> list = {};
+        struct
+        {
+            T* begin;
+            size_t size;
+        };
+    };
+
+    begin = &vector[0];
+    size  = vector.size();
+
+    return list;
+}
+
 int main(int argc, const char* argv[])
 {
+    std::vector<llvm::cl::OptionEnumValue> values;
+    for (const auto registered: lilac::shared::BackendAction::GetRegistered())
+        values.emplace_back(registered->Name(), registered->Kind(), registered->Desc());
+
+    llvm::cl::opt<lilac::shared::ModuleKind> module(
+        "module",
+        llvm::cl::Required,
+        llvm::cl::cat(Category),
+        llvm::cl::desc("Load the named module"),
+        llvm::cl::ValuesClass(GetInitializerList(values)));
+
     llvm::cl::SetVersionPrinter([](llvm::raw_ostream& ost)
     {
         ost << "ild (ILD) " << LILAC_DATE << '\n' << LILAC_SHORT_LICENSE;
@@ -67,12 +82,12 @@ int main(int argc, const char* argv[])
     llvm::cl::HideUnrelatedOptions(Category);
     llvm::cl::ParseCommandLineOptions(argc, argv);
 
-    std::function<int(const std::string&, const std::string&, const std::string&)> caller;
-    switch (Module.getValue())
+    for (const auto registered: lilac::shared::BackendAction::GetRegistered())
     {
-        case CSharp: caller = MODULE_REF(csharp);
-            break;
+        if (registered->Kind() == module.getValue())
+            return registered->Run(XMLPathOpt.getValue(), LibPathOpt.getValue(), OutPathOpt.getValue());
     }
 
-    return caller(XMLPathOpt.getValue(), LibPathOpt.getValue(), OutPathOpt.getValue());
+    llvm::errs() << "No such module '" << module.ValueStr << "'\n";
+    return 1;
 }
