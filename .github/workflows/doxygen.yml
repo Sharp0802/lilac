@@ -1,23 +1,42 @@
-name: Deploy doxygen to Pages
+name: Deploy with Doxygen
 
 on:
   push:
     branches: ["master"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-
+  # Single deploy job since we're just deploying
   deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - uses: DenverCoder1/doxygen-github-pages-action@v2.0.0
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
-          github_token: ${{ secrets.GH_TOKEN }}
-          branch: gh-pages
-          folder: site/html
-          config_file: Doxyfile
+          submodules: true
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Doxygen
+        uses: mattnotmitt/doxygen-action@edge
+        with:
+          doxyfile-path: "./Doxyfile"
+          working-directory: "."
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './site'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
