@@ -22,6 +22,7 @@
 #include "pch.h"
 #include "shared/backend.h"
 #include "module.h"
+#include "shared/exception.h"
 
 std::string LibraryName;
 
@@ -39,6 +40,8 @@ std::map<int, std::string> errorMap = {
     { frxml::E_INVETAG, "Invalid ETag" }
 };
 
+static const frxml::dom* s_ErrorOn = nullptr;
+
 std::string IndentRaw(const std::string& src, int indentC)
 {
     std::string indent(indentC, '\t');
@@ -52,7 +55,7 @@ std::string IndentRaw(const std::string& src, int indentC)
     return out.str();
 }
 
-std::string ResolveTypeRef(std::string src)
+std::string ResolveTypeRef(std::string src, const frxml::dom& loc)
 {
     int refC = 0;
     for (; src[src.size() - 1 - refC] == '*'; refC++)
@@ -61,6 +64,9 @@ std::string ResolveTypeRef(std::string src)
     if (refC)
         src = src.erase(src.length() - refC, refC);
     std::string ref(refC, '*');
+
+    if (src == "__fp128")
+        throw lilac::shared::exception("__fp128 is not supported by C#", loc);
 
     static std::map<std::string, std::string> builtins = {
         { "__void", "void" },
@@ -98,7 +104,11 @@ std::string CreatePInvokeStub(const frxml::dom& dom, int indentC, bool _this)
     for (auto i = 0; i < dom.children().size(); ++i)
     {
         if (i) prm << ", ";
-        auto type = ResolveTypeRef(static_cast<std::string>(dom.children()[i].attr().at("type").view()));
+
+        auto type = ResolveTypeRef(
+            static_cast<std::string>(dom.children()[i].attr().at("type").view()),
+            dom.children()[i]);
+
         if (type == "bool")
             prm << "[System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.U1)] ";
         prm << type << ' ' << dom.children()[i].attr().at("name").view();
@@ -111,7 +121,21 @@ std::string CreatePInvokeStub(const frxml::dom& dom, int indentC, bool _this)
         ref << dom.children()[i].attr().at("name").view();
     }
 
-    auto ret = ResolveTypeRef(static_cast<std::string>(dom.attr().at("return").view()));
+    auto callconv = dom.attr().at("callconv").view();
+
+    static std::map<std::string_view, std::string_view> callconvs = {
+        { "cdecl", "CDecl" },
+        { "stdcall", "StdCall" },
+        { "thiscall", "ThisCall" },
+    };
+    if (!callconvs.contains(callconv))
+    {
+        throw lilac::shared::exception(
+            std::format("Calling convention '{}' is not supported by this target", callconv),
+            dom);
+    }
+
+    auto ret = ResolveTypeRef(static_cast<std::string>(dom.attr().at("return").view()), dom);
 
     std::stringstream sst;
     if (_this)
@@ -125,7 +149,9 @@ std::string CreatePInvokeStub(const frxml::dom& dom, int indentC, bool _this)
     else
         sst << indent << "__PInvoke(" << ref.str() << ");\n\n";
     sst << indent << "[System.Runtime.InteropServices.DllImport(\""
-        << LibraryName << "\", EntryPoint=\"" << dom.attr().at("mangle").view() << "\", ExactSpelling=true)]\n"
+        << LibraryName << "\", EntryPoint=\"" << dom.attr().at("mangle").view()
+        << "\", CallingConvention=System.Runtime.InteropServices.CallingConvention."
+        << callconvs[callconv] << ", ExactSpelling=true)]\n"
         << indent << "static extern " << ret << " __PInvoke(";
     if (_this)
         sst << "void* @this";
@@ -152,8 +178,9 @@ void Traverse(std::ostream& ost, const frxml::dom& parent, const frxml::dom& dom
     }
     else if (dom.tag().view() == "enum")
     {
-        ost << indent << "public enum " << dom.attr().at("name").view() << " : "
-            << ResolveTypeRef(static_cast<std::string>(dom.attr().at("type").view())) << '\n'
+        auto underlyingT = ResolveTypeRef(static_cast<std::string>(dom.attr().at("type").view()), dom);
+
+        ost << indent << "public enum " << dom.attr().at("name").view() << " : " << underlyingT << '\n'
             << indent << "{\n";
         for (auto& child: dom.children())
             Traverse(ost, dom, child, indentC + 1);
@@ -197,7 +224,7 @@ void Traverse(std::ostream& ost, const frxml::dom& parent, const frxml::dom& dom
             Traverse(params, dom, dom.children()[i], 0);
         }
 
-        const auto ret  = ResolveTypeRef(static_cast<std::string>(dom.attr().at("return").view()));
+        const auto ret  = ResolveTypeRef(static_cast<std::string>(dom.attr().at("return").view()), dom);
         const auto name = dom.attr().at("name").view();
 
         ost << indent << "public " << ret << ' ' << name << '(' << params.str() << ");\n"
@@ -223,7 +250,7 @@ void Traverse(std::ostream& ost, const frxml::dom& parent, const frxml::dom& dom
             Traverse(params, dom, dom.children()[i], 0);
         }
 
-        const auto ret  = ResolveTypeRef(static_cast<std::string>(dom.attr().at("return").view()));
+        const auto ret  = ResolveTypeRef(static_cast<std::string>(dom.attr().at("return").view()), dom);
         const auto name = dom.attr().at("name").view();
 
         ost << indent << "public static " << ret << ' ' << name << '(' << params.str() << ");\n"
@@ -234,7 +261,7 @@ void Traverse(std::ostream& ost, const frxml::dom& parent, const frxml::dom& dom
     else if (dom.tag().view() == "param")
     {
         ost << indent
-            << ResolveTypeRef(static_cast<std::string>(dom.attr().at("type").view()))
+            << ResolveTypeRef(static_cast<std::string>(dom.attr().at("type").view()), dom)
             << ' ' << dom.attr().at("name").view();
     }
     else if (dom.tag().view() == "record")
@@ -304,6 +331,13 @@ int lilac::csharp::CSharpBackendAction::Run(std::string confPath, std::string li
             ofs << '\n';
             Traverse(ofs, doc.root(), child, 0);
         }
+    }
+    catch (const shared::exception& e)
+    {
+        if (s_ErrorOn)
+            e.print(*s_ErrorOn);
+        else
+            e.print();
     }
     catch (const std::ofstream::failure& e)
     {
