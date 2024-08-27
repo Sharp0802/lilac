@@ -323,7 +323,7 @@ namespace lilac::cxx
     }
 
     std::optional<frxml::dom> RecordFunction(
-        clang::Sema& sema,
+        clang::Sema&         sema,
         clang::FunctionDecl* fn)
     {
         static std::map<clang::Decl::Kind, std::string> tagMap = {
@@ -335,7 +335,7 @@ namespace lilac::cxx
         if (!fn->isStatic() && tagMap.contains(fn->getKind()))
             tag = tagMap[fn->getKind()];
 
-        const auto proto = fn->getType()->getAs<clang::FunctionProtoType>();
+        const auto proto    = fn->getType()->getAs<clang::FunctionProtoType>();
         const auto callconv = clang::FunctionType::getNameForCallConv(proto->getCallConv());
 
         clang::ASTNameGenerator ang(fn->getASTContext());

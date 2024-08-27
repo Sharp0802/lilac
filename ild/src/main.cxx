@@ -49,9 +49,10 @@ std::initializer_list<T> GetInitializerList(std::vector<T> vector)
     union
     {
         std::initializer_list<T> list = {};
+
         struct
         {
-            T* begin;
+            T*     begin;
             size_t size;
         };
     };

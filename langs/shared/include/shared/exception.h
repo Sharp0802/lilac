@@ -28,7 +28,7 @@ namespace lilac::shared
     class exception final : public std::exception
     {
         const frxml::dom& m_DOM;
-        std::string m_Message;
+        std::string       m_Message;
 
     public:
         exception(std::string msg, const frxml::dom& dom) noexcept;

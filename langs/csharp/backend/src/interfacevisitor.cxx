@@ -158,10 +158,10 @@ void lilac::csharp::RecordVisitor::Begin(
 }
 
 void lilac::csharp::RecordVisitor::End(
-    VisitContext& ctx,
+    VisitContext&     ctx,
     const frxml::dom& parent,
     const frxml::dom& current,
-    int depth)
+    int               depth)
 {
     const auto indent = shared::GetIndent(depth);
     ctx.Output << indent << "}" << shared::endl;
@@ -175,18 +175,18 @@ std::string lilac::csharp::EnumVisitor::getName() const
 }
 
 void lilac::csharp::EnumVisitor::Begin(
-    VisitContext& ctx,
+    VisitContext&     ctx,
     const frxml::dom& parent,
     const frxml::dom& current,
-    int depth)
+    int               depth)
 {
 }
 
 void lilac::csharp::EnumVisitor::End(
-    VisitContext& ctx,
+    VisitContext&     ctx,
     const frxml::dom& parent,
     const frxml::dom& current,
-    int depth)
+    int               depth)
 {
 }
 

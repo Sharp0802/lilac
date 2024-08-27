@@ -20,7 +20,6 @@
 #pragma once
 
 #include <ostream>
-#include <vector>
 #include <array>
 
 namespace lilac::shared
