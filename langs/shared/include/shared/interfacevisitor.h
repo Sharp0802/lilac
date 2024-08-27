@@ -83,19 +83,17 @@ namespace lilac::shared
     template<typename TContext, TVisitor<TContext>... TVisitor>
     class GenericInterfaceVisitor final : public InterfaceVisitor<TContext>
     {
-        std::map<std::string, std::unique_ptr<InterfaceVisitor<TContext>>> m_Visitors;
+        std::map<std::string, std::shared_ptr<InterfaceVisitor<TContext>>> m_Visitors;
 
     public:
         GenericInterfaceVisitor()
         {
-            [&] (std::unique_ptr<InterfaceVisitor<TContext>> visitor)
-            {
+            for (std::shared_ptr<InterfaceVisitor<TContext>> visitor: { std::make_shared<TVisitor>()... })
                 m_Visitors.emplace(visitor->getName(), std::move(visitor));
-            }(std::make_unique<TVisitor>()...);
         }
 
         [[nodiscard]]
-        const std::string& getName() const override
+        std::string getName() const override
         {
             return "__generic__";
         }
