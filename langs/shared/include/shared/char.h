@@ -26,23 +26,30 @@ namespace lilac::shared
 {
     constexpr int MaxIntrinIndent = 255;
 
+    template<typename T, T e, size_t N>
+    struct __FilledString
+    {
+        constexpr __FilledString() noexcept
+        {
+            for (size_t i = 0; i < N; ++i)
+                V[i] = e;
+            V[N] = 0;
+        }
+
+        T V[N + 1];
+    };
+
     template<int... Ts>
     struct __IndentationVector
     {
         template<int N>
         struct __Indentation
         {
-            static constexpr std::array<char, N> Get()
-            {
-                std::array<char, N> v{};
-                v.fill('\t');
-                return v;
-            }
-
-            static constexpr std::array<char, N> V = Get();
+            static constexpr auto V = __FilledString<char, '\t', N>();
+            static constexpr const char* P = V.V;
         };
 
-        static constexpr std::array<const char*, sizeof...(Ts)> Vs = { __Indentation<Ts>::V.data()... };
+        static constexpr std::array<const char*, sizeof...(Ts)> Vs = { __Indentation<Ts>::P... };
     };
 
     template<int... Ts>
