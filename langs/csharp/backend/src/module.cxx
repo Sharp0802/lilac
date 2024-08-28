@@ -22,9 +22,9 @@
 #include "pch.h"
 #include "shared/backend.h"
 #include "module.h"
-#include "shared/exception.h"
 
-std::string LibraryName;
+#include "interfacevisitor.h"
+#include "shared/exception.h"
 
 std::map<int, std::string> errorMap = {
     { frxml::S_OK, "Operation completed successfully" },
@@ -40,258 +40,12 @@ std::map<int, std::string> errorMap = {
     { frxml::E_INVETAG, "Invalid ETag" }
 };
 
-static const frxml::dom* s_ErrorOn = nullptr;
-
-std::string IndentRaw(const std::string& src, int indentC)
-{
-    std::string indent(indentC, '\t');
-
-    std::stringstream ss(src);
-    std::stringstream out;
-
-    for (std::string buffer; std::getline(ss, buffer);)
-        out << indent << buffer;
-
-    return out.str();
-}
-
-std::string ResolveTypeRef(std::string src, const frxml::dom& loc)
-{
-    int refC = 0;
-    for (; src[src.size() - 1 - refC] == '*'; refC++)
-    {
-    }
-    if (refC)
-        src = src.erase(src.length() - refC, refC);
-    std::string ref(refC, '*');
-
-    if (src == "__fp128")
-        throw lilac::shared::exception("__fp128 is not supported by C#", loc);
-
-    static std::map<std::string, std::string> builtins = {
-        { "__void", "void" },
-        { "__bool", "bool" },
-        { "__u8", "byte" },
-        { "__u16", "ushort" },
-        { "__u32", "uint" },
-        { "__uptr", "nuint" },
-        { "__u64", "ulong" },
-        { "__u128", "System.UInt128" },
-        { "__s8", "sbyte" },
-        { "__s16", "short" },
-        { "__s32", "int" },
-        { "__sptr", "nint" },
-        { "__s64", "long" },
-        { "__s128", "System.Int128" },
-        { "__fp16", "System.Half" },
-        { "__fp32", "float" },
-        { "__fp64", "double" }
-    };
-    if (builtins.contains(src))
-        return builtins[src] + ref;
-
-    for (char& i: src)
-        if (i == '/')
-            i = '.';
-    return src + ref;
-}
-
-std::string CreatePInvokeStub(const frxml::dom& dom, int indentC, bool _this)
-{
-    std::string indent(indentC, '\t');
-
-    std::stringstream prm;
-    for (auto i = 0; i < dom.children().size(); ++i)
-    {
-        if (i) prm << ", ";
-
-        auto type = ResolveTypeRef(
-            static_cast<std::string>(dom.children()[i].attr().at("type").view()),
-            dom.children()[i]);
-
-        if (type == "bool")
-            prm << "[System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.U1)] ";
-        prm << type << ' ' << dom.children()[i].attr().at("name").view();
-    }
-
-    std::stringstream ref;
-    for (auto i = 0; i < dom.children().size(); ++i)
-    {
-        if (i) ref << ", ";
-        ref << dom.children()[i].attr().at("name").view();
-    }
-
-    auto callconv = dom.attr().at("callconv").view();
-
-    static std::map<std::string_view, std::string_view> callconvs = {
-        { "cdecl", "CDecl" },
-        { "stdcall", "StdCall" },
-        { "thiscall", "ThisCall" },
-    };
-    if (!callconvs.contains(callconv))
-    {
-        throw lilac::shared::exception(
-            std::format("Calling convention '{}' is not supported by this target", callconv),
-            dom);
-    }
-
-    auto ret = ResolveTypeRef(static_cast<std::string>(dom.attr().at("return").view()), dom);
-
-    std::stringstream sst;
-    if (_this)
-    {
-        sst << indent << "fixed (void* p = __data)\n"
-            << indent << "\t__PInvoke(p";
-        if (!ref.str().empty())
-            sst << ", " << ref.str();
-        sst << ");\n";
-    }
-    else
-        sst << indent << "__PInvoke(" << ref.str() << ");\n\n";
-    sst << indent << "[System.Runtime.InteropServices.DllImport(\""
-        << LibraryName << "\", EntryPoint=\"" << dom.attr().at("mangle").view()
-        << "\", CallingConvention=System.Runtime.InteropServices.CallingConvention."
-        << callconvs[callconv] << ", ExactSpelling=true)]\n"
-        << indent << "static extern " << ret << " __PInvoke(";
-    if (_this)
-        sst << "void* @this";
-    if (!prm.str().empty())
-        sst << ", " << prm.str();
-    sst << ");\n";
-    return sst.str();
-}
-
-void Traverse(std::ostream& ost, const frxml::dom& parent, const frxml::dom& dom, int indentC)
-{
-    std::string indent(indentC, '\t');
-
-    if (dom.tag().view() == "namespace")
-    {
-        ost << indent << "public static class " << dom.attr().at("name").view() << '\n'
-            << indent << "{\n";
-        for (auto i = 0; i < dom.children().size(); ++i)
-        {
-            if (i) ost << '\n';
-            Traverse(ost, dom, dom.children()[i], indentC + 1);
-        }
-        ost << indent << "}\n";
-    }
-    else if (dom.tag().view() == "enum")
-    {
-        auto underlyingT = ResolveTypeRef(static_cast<std::string>(dom.attr().at("type").view()), dom);
-
-        ost << indent << "public enum " << dom.attr().at("name").view() << " : " << underlyingT << '\n'
-            << indent << "{\n";
-        for (auto& child: dom.children())
-            Traverse(ost, dom, child, indentC + 1);
-        ost << indent << "}\n";
-    }
-    else if (dom.tag().view() == "constant")
-    {
-        ost << indent << dom.attr().at("name").view() << " = " << dom.attr().at("value").view() << ",\n";
-    }
-    else if (dom.tag().view() == "ctor")
-    {
-        const auto type = parent.attr().at("name").view();
-
-        std::stringstream params;
-        for (auto i = 0; i < dom.children().size(); ++i)
-        {
-            if (i) params << ", ";
-            Traverse(params, dom, dom.children()[i], 0);
-        }
-
-        ost << indent << "public " << type << "(" << params.str() << ");\n"
-            << indent << "{\n"
-            << CreatePInvokeStub(dom, indentC + 1, true)
-            << indent << "}\n";
-    }
-    else if (dom.tag().view() == "dtor")
-    {
-        const auto type = parent.attr().at("name").view();
-
-        ost << indent << "public ~" << type << "()\n"
-            << indent << "{\n"
-            << CreatePInvokeStub(dom, indentC + 1, true)
-            << indent << "}\n";
-    }
-    else if (dom.tag().view() == "method")
-    {
-        std::stringstream params;
-        for (auto i = 0; i < dom.children().size(); ++i)
-        {
-            if (i) params << ", ";
-            Traverse(params, dom, dom.children()[i], 0);
-        }
-
-        const auto ret  = ResolveTypeRef(static_cast<std::string>(dom.attr().at("return").view()), dom);
-        const auto name = dom.attr().at("name").view();
-
-        ost << indent << "public " << ret << ' ' << name << '(' << params.str() << ");\n"
-            << indent << "{\n"
-            << CreatePInvokeStub(dom, indentC + 1, true)
-            << indent << "}\n";
-    }
-    else if (dom.tag().view() == "function")
-    {
-        if (parent.tag().view() == "assembly")
-        {
-            ost << indent << "public static partial class __\n"
-                << indent << "{\n";
-            Traverse(ost, frxml::dom::element("__"), dom, indentC + 1);
-            ost << indent << "}\n";
-            return;
-        }
-
-        std::stringstream params;
-        for (auto i = 0; i < dom.children().size(); ++i)
-        {
-            if (i) params << ", ";
-            Traverse(params, dom, dom.children()[i], 0);
-        }
-
-        const auto ret  = ResolveTypeRef(static_cast<std::string>(dom.attr().at("return").view()), dom);
-        const auto name = dom.attr().at("name").view();
-
-        ost << indent << "public static " << ret << ' ' << name << '(' << params.str() << ");\n"
-            << indent << "{\n"
-            << CreatePInvokeStub(dom, indentC + 1, false)
-            << indent << "}\n";
-    }
-    else if (dom.tag().view() == "param")
-    {
-        ost << indent
-            << ResolveTypeRef(static_cast<std::string>(dom.attr().at("type").view()), dom)
-            << ' ' << dom.attr().at("name").view();
-    }
-    else if (dom.tag().view() == "record")
-    {
-        ost << "public struct " << dom.attr().at("name").view() << '\n'
-            << "{\n"
-            << "\tprivate byte __data[" << dom.attr().at("size").view() << "];\n";
-
-        for (auto i = 0; i < dom.children().size(); ++i)
-        {
-            if (i) ost << '\n';
-            Traverse(ost, dom, dom.children()[i], indentC + 1);
-        }
-
-        ost << "}\n";
-    }
-    else
-    {
-        std::cerr << "Unknown tag '" << dom.tag().view() << "'\n";
-    }
-}
-
 lilac::csharp::CSharpBackendAction::CSharpBackendAction(): BackendAction(shared::CSharp, "csharp", "C# backend module")
 {
 }
 
 int lilac::csharp::CSharpBackendAction::Run(std::string confPath, std::string libPath, std::string outPath) const
 {
-    LibraryName = libPath;
-
     std::stringstream input;
     try
     {
@@ -326,18 +80,14 @@ int lilac::csharp::CSharpBackendAction::Run(std::string confPath, std::string li
     try
     {
         std::ofstream ofs(outPath);
-        for (auto& child: doc.root().children())
-        {
-            ofs << '\n';
-            Traverse(ofs, doc.root(), child, 0);
-        }
+
+        VisitContext ctx{ "", libPath, ofs };
+        CSharpAssemblyInterfaceVisitor visitor;
+        visitor.Begin(ctx, doc.root() /* there is neither parent nor null */, doc.root(), 0);
     }
     catch (const shared::exception& e)
     {
-        if (s_ErrorOn)
-            e.print(*s_ErrorOn);
-        else
-            e.print();
+        e.print();
     }
     catch (const std::ofstream::failure& e)
     {
