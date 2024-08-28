@@ -300,6 +300,141 @@ std::string lilac::csharp::FunctionVisitor::GetName() const
     return "function";
 }
 
+void lilac::csharp::FunctionVisitor::Begin(
+    VisitContext&     ctx,
+    const frxml::dom& parent,
+    const frxml::dom& current,
+    int               depth)
+{
+    const auto indent = shared::GetIndent(depth);
+
+    auto isUnsafe = false;
+
+
+    const auto returnType = Type(static_cast<std::string>(current.attr().at("return").view()), current);
+    // ReSharper disable once CppDFAConstantConditions
+    isUnsafe = isUnsafe || returnType.contains('*');
+
+    // parameters
+
+    std::stringstream managedParams;
+    for (auto i = 0; i < current.children().size(); ++i)
+    {
+        if (i) managedParams << ", ";
+
+        auto param = current.children().at(i);
+        auto type  = Type(static_cast<std::string>(param.attr().at("type").view()), current.children()[i]);
+        managedParams << type << ' ' << param.attr().at("name").view();
+    }
+
+    std::stringstream nativeParams;
+    for (auto i = 0; i < current.children().size(); ++i)
+    {
+        if (i) nativeParams << ", ";
+
+        auto param = current.children().at(i);
+        auto type  = Type(static_cast<std::string>(param.attr().at("type").view()), current.children()[i]);
+        if (!isUnsafe && type.contains('*'))
+            isUnsafe = true;
+        if (type == "bool")
+            nativeParams << "[System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.U1)] ";
+        nativeParams << type << ' ' << param.attr().at("name").view();
+    }
+
+    std::stringstream paramRef;
+    for (auto i = 0; i < current.children().size(); ++i)
+    {
+        if (i) paramRef << ", ";
+        paramRef << current.children().at(i).attr().at("name").view();
+    }
+
+    // callconv
+
+#define CALLCONV "System.Runtime.InteropServices.CallingConvention."
+    static std::map<std::string_view, std::string_view> callconvs = {
+        { "cdecl", CALLCONV "Cdecl" },
+        { "stdcall", CALLCONV "StdCall" },
+        { "thiscall", CALLCONV "ThisCall" },
+    };
+#undef CALLCONV
+
+    auto callconv = current.attr().at("callconv").view();
+    if (!callconvs.contains(callconv))
+        throw shared::exception(std::format("Calling convention `{}' is not supported", callconv), current);
+    callconv = callconvs.at(callconv);
+
+    // assembly - managed parameters
+
+    const auto isStatic = current.tag().view() == FunctionVisitor().GetName();
+
+    const auto isMemberFn = parent.tag().view() == RecordVisitor().GetName();
+    if (!isMemberFn && !isStatic)
+        throw shared::exception("'element' can only be member function", current);
+
+    const auto name = current.attr().at("name").view();
+
+    ctx.Output << indent << "public ";
+    if (!isMemberFn)
+        ctx.Output << "static ";
+    if (isUnsafe)
+        ctx.Output << "unsafe ";
+    ctx.Output << returnType << ' ' << name << '(' << managedParams.str() << ')' << shared::endl;
+
+    // assembly - body
+
+    ctx.Output << indent << "{" << shared::endl;
+
+    ctx.Output << indent << TAB;
+    if (returnType != "void")
+        ctx.Output << "return ";
+
+    if (isMemberFn)
+    {
+        ctx.Output << "__PInvoke(This";
+        if (!paramRef.str().empty())
+            ctx.Output << ", " << paramRef.str();
+        ctx.Output << ");" << shared::endl;
+    }
+    else
+    {
+        ctx.Output << "__PInvoke(" << paramRef.str() << ");" << shared::endl;
+    }
+
+    ctx.Output << shared::endl;
+
+    // assembly - P/Invoke def
+
+    const auto mangling = current.attr().at("mangle").view();
+
+#define INTEROP_NS "System.Runtime.InteropServices."
+    ctx.Output
+        << indent << TAB "[" INTEROP_NS "DllImport(" << shared::endl
+        << indent << TAB TAB "\"" << ctx.LibraryName << "\"," << shared::endl
+        << indent << TAB TAB "EntryPoint = \"" << mangling << "\"," << shared::endl
+        << indent << TAB TAB "CallingConvention = " << callconv << ',' << shared::endl
+        << indent << TAB TAB "ExactSpelling = true)]" << shared::endl;
+#undef INTEROP_NS
+
+    ctx.Output << indent << TAB "static extern " << returnType << " __PInvoke(";
+    if (isMemberFn)
+    {
+        ctx.Output << "IntPtr @this";
+        if (!nativeParams.str().empty())
+            ctx.Output << ", ";
+    }
+    ctx.Output << nativeParams.str() << ");" << shared::endl;
+
+    ctx.Output << indent << "}" << shared::endl;
+}
+
+void lilac::csharp::FunctionVisitor::End(
+    VisitContext&     ctx,
+    const frxml::dom& parent,
+    const frxml::dom& current,
+    int               depth)
+{
+}
+
 std::string lilac::csharp::MethodVisitor::GetName() const
 {
     return "method";
