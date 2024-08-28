@@ -224,6 +224,8 @@ void lilac::csharp::RecordVisitor::End(
 
 #pragma endregion
 
+#pragma region EnumVisitor
+
 std::string lilac::csharp::EnumVisitor::GetName() const
 {
     return "enum";
@@ -235,6 +237,16 @@ void lilac::csharp::EnumVisitor::Begin(
     const frxml::dom& current,
     int               depth)
 {
+    const auto indent = shared::GetIndent(depth);
+
+    const auto name = current.attr().at("name").view();
+    const auto type = current.attr().at("type").view();
+
+    ctx.Output
+        << indent << "public enum " << name << " : " << Type(static_cast<std::string>(type), current) << "\n"
+        << indent << "{\n";
+
+    ForeachChildren(ctx, current, depth + 1, false);
 }
 
 void lilac::csharp::EnumVisitor::End(
@@ -243,12 +255,45 @@ void lilac::csharp::EnumVisitor::End(
     const frxml::dom& current,
     int               depth)
 {
+    const auto indent = shared::GetIndent(depth);
+    ctx.Output << indent << "}" << shared::endl;
 }
+
+#pragma endregion
+
+#pragma region EnumConstantVisitor
 
 std::string lilac::csharp::EnumConstantVisitor::GetName() const
 {
     return "constant";
 }
+
+void lilac::csharp::EnumConstantVisitor::Begin(
+    VisitContext&     ctx,
+    const frxml::dom& parent,
+    const frxml::dom& current,
+    int               depth)
+{
+    if (parent.tag().view() != EnumVisitor().GetName())
+        throw shared::exception("`constant' element should be child of `enum' element", current);
+
+    const auto indent = shared::GetIndent(depth);
+
+    const auto name  = current.attr().at("name").view();
+    const auto value = current.attr().at("value").view();
+
+    ctx.Output << indent << name << " = " << value << ',' << shared::endl;
+}
+
+void lilac::csharp::EnumConstantVisitor::End(
+    VisitContext&     ctx,
+    const frxml::dom& parent,
+    const frxml::dom& current,
+    int               depth)
+{
+}
+
+#pragma endregion
 
 std::string lilac::csharp::FunctionVisitor::GetName() const
 {
