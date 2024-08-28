@@ -29,6 +29,9 @@ namespace lilac::csharp
         std::ostream& Output;
     };
 
+    /**
+     * @brief A visitor that creates bridge of `assembly` elements with C#
+     */
     class CSharpAssemblyInterfaceVisitor final : public shared::AssemblyVisitor<VisitContext>
     {
     public:
@@ -37,6 +40,9 @@ namespace lilac::csharp
         void End(VisitContext& ctx, const frxml::dom& parent, const frxml::dom& current, int depth) override;
     };
 
+    /**
+     * @brief A visitor that creates bridge of `namespace` elements with C#
+     */
     class NamespaceVisitor final : public shared::InterfaceVisitor<VisitContext>
     {
     public:
@@ -48,6 +54,9 @@ namespace lilac::csharp
         void End(VisitContext& ctx, const frxml::dom& parent, const frxml::dom& current, int depth) override;
     };
 
+    /**
+     * @brief A visitor that creates bridge of `record` elements with C#
+     */
     class RecordVisitor final : public shared::InterfaceVisitor<VisitContext>
     {
     public:
@@ -59,6 +68,9 @@ namespace lilac::csharp
         void End(VisitContext& ctx, const frxml::dom& parent, const frxml::dom& current, int depth) override;
     };
 
+    /**
+     * @brief A visitor that creates bridge of `enum` elements with C#
+     */
     class EnumVisitor final : public shared::InterfaceVisitor<VisitContext>
     {
     public:
@@ -70,6 +82,9 @@ namespace lilac::csharp
         void End(VisitContext& ctx, const frxml::dom& parent, const frxml::dom& current, int depth) override;
     };
 
+    /**
+     * @brief A visitor that creates bridge of `constant` elements with C#
+     */
     class EnumConstantVisitor final : public shared::InterfaceVisitor<VisitContext>
     {
     public:
@@ -81,6 +96,9 @@ namespace lilac::csharp
         void End(VisitContext& ctx, const frxml::dom& parent, const frxml::dom& current, int depth) override;
     };
 
+    /**
+     * @brief A visitor that creates bridge of `function` elements with C#
+     */
     class FunctionVisitor : public shared::InterfaceVisitor<VisitContext>
     {
     public:
@@ -92,6 +110,9 @@ namespace lilac::csharp
         void End(VisitContext& ctx, const frxml::dom& parent, const frxml::dom& current, int depth) final;
     };
 
+    /**
+     * @brief A visitor that creates bridge of `method` elements with C#
+     */
     class MethodVisitor : public FunctionVisitor
     {
     public:
@@ -99,6 +120,9 @@ namespace lilac::csharp
         std::string GetName() const override;
     };
 
+    /**
+     * @brief A visitor that creates bridge of `ctor` elements with C#
+     */
     class CtorVisitor final : public MethodVisitor
     {
     public:
@@ -106,6 +130,9 @@ namespace lilac::csharp
         std::string GetName() const override;
     };
 
+    /**
+     * @brief A visitor that creates bridge of `dtor` elements with C#
+     */
     class DtorVisitor final : public MethodVisitor
     {
     public:
