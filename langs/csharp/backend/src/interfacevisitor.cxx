@@ -21,6 +21,8 @@
 #include "shared/char.h"
 
 #define TAB "\t"
+#define THIS "__ref"
+
 static std::string Type(std::string src, const frxml::dom& loc)
 {
     int refC = 0;
@@ -74,13 +76,15 @@ static lilac::shared::GenericInterfaceVisitor<
     lilac::csharp::DtorVisitor
 > s_GenericInterfaceVisitor;
 
-void ForeachChildren(lilac::csharp::VisitContext& ctx, const frxml::dom& current, int depth)
+void ForeachChildren(lilac::csharp::VisitContext& ctx, const frxml::dom& current, int depth, bool spacing)
 {
     for (auto i = 0; i < current.children().size(); ++i)
     {
-        if (i)
+        if (spacing && i)
             ctx.Output << lilac::shared::endl;
+
         s_GenericInterfaceVisitor.Begin(ctx, current, current.children()[i], depth);
+        s_GenericInterfaceVisitor.End(ctx, current, current.children()[i], depth);
     }
 }
 
@@ -106,7 +110,7 @@ void lilac::csharp::CSharpAssemblyInterfaceVisitor::Begin(
         addDepth++;
     }
 
-    ForeachChildren(ctx, current, depth + addDepth);
+    ForeachChildren(ctx, current, depth + addDepth, true);
 }
 
 void lilac::csharp::CSharpAssemblyInterfaceVisitor::End(
@@ -143,7 +147,7 @@ void lilac::csharp::NamespaceVisitor::Begin(
         << indent << "namespace " << current.attr().at("name").view() << shared::endl
         << indent << '{' << shared::endl;
 
-    ForeachChildren(ctx, current, depth + 1);
+    ForeachChildren(ctx, current, depth + 1, true);
 }
 
 void lilac::csharp::NamespaceVisitor::End(
@@ -194,7 +198,7 @@ void lilac::csharp::RecordVisitor::Begin(
     if (!current.children().empty())
         ctx.Output << shared::endl;
 
-    ForeachChildren(ctx, current, depth + 1);
+    ForeachChildren(ctx, current, depth + 1, true);
 }
 
 void lilac::csharp::RecordVisitor::End(
