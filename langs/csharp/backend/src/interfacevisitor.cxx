@@ -181,18 +181,29 @@ void lilac::csharp::RecordVisitor::Begin(
     const auto align = current.attr().at("align").view();
 
 #define INTEROP_NS "global::System.Runtime.InteropServices."
+#define LAYOUT_KIND INTEROP_NS "LayoutKind."
 #define COMPILER_NS "global::System.Runtime.CompilerServices."
 
     ctx.Output
-        << indent << "[" INTEROP_NS"StructLayout(" INTEROP_NS"Explicit, Size=" << size << ", Pack=" << align << ")]\n"
+        << indent << "[" INTEROP_NS"StructLayout(" LAYOUT_KIND"Explicit, Size=" << size << ", Pack=" << align << ")]\n"
         << indent << "public struct InteropTest\n"
         << indent << "{\n"
         << indent << TAB "[" INTEROP_NS"FieldOffset(0)]\n"
-        << indent << TAB "private byte __ref;\n"
+        << indent << TAB "private byte " THIS ";\n"
         << indent << "\n"
-        << indent << TAB "private unsafe void* This => " COMPILER_NS"Unsafe.AsPointer(ref __ref);\n";
+        << indent << TAB "private IntPtr This\n"
+        << indent << TAB "{\n"
+        << indent << TAB TAB "get\n"
+        << indent << TAB TAB "{\n"
+        << indent << TAB TAB TAB "unsafe\n"
+        << indent << TAB TAB TAB "{\n"
+        << indent << TAB TAB TAB TAB "return (IntPtr)" COMPILER_NS"Unsafe.AsPointer(ref __ref);\n"
+        << indent << TAB TAB TAB "}\n"
+        << indent << TAB TAB "}\n"
+        << indent << TAB "}\n";
 
 #undef COMPILER_NS
+#undef LAYOUT_KIND
 #undef INTEROP_NS
 
     if (!current.children().empty())
