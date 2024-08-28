@@ -25,6 +25,7 @@ namespace lilac::csharp
     struct VisitContext
     {
         std::string   RootNamespace;
+        std::string   LibraryName;
         std::ostream& Output;
     };
 
