@@ -21,6 +21,46 @@
 #include "shared/char.h"
 
 #define TAB "\t"
+static std::string Type(std::string src, const frxml::dom& loc)
+{
+    int refC = 0;
+    for (; src[src.size() - 1 - refC] == '*'; refC++)
+    {
+    }
+    if (refC)
+        src = src.erase(src.length() - refC, refC);
+    std::string ref(refC, '*');
+
+    if (src == "__fp128")
+        throw lilac::shared::exception("__fp128 is not supported by C#", loc);
+
+    static std::map<std::string, std::string> builtins = {
+        { "__void", "void" },
+        { "__bool", "bool" },
+        { "__u8", "byte" },
+        { "__u16", "ushort" },
+        { "__u32", "uint" },
+        { "__uptr", "nuint" },
+        { "__u64", "ulong" },
+        { "__u128", "System.UInt128" },
+        { "__s8", "sbyte" },
+        { "__s16", "short" },
+        { "__s32", "int" },
+        { "__sptr", "nint" },
+        { "__s64", "long" },
+        { "__s128", "System.Int128" },
+        { "__fp16", "System.Half" },
+        { "__fp32", "float" },
+        { "__fp64", "double" }
+    };
+    if (builtins.contains(src))
+        return builtins[src] + ref;
+
+    for (char& i: src)
+        if (i == '/')
+            i = '.';
+    return src + ref;
+}
 
 static lilac::shared::GenericInterfaceVisitor<
     lilac::csharp::VisitContext,
