@@ -52,7 +52,7 @@ namespace lilac::shared
          * @return Name of this interface visitor
          */
         [[nodiscard]]
-        virtual std::string getName() const = 0;
+        virtual std::string GetName() const = 0;
 
         /**
          * @param ctx Context object for interface visitors
@@ -93,7 +93,7 @@ namespace lilac::shared
         }
 
         [[nodiscard]]
-        std::string getName() const override
+        std::string GetName() const override
         {
             return "__generic__";
         }
@@ -133,7 +133,7 @@ namespace lilac::shared
     {
     public:
         [[nodiscard]]
-        std::string getName() const final
+        std::string GetName() const final
         {
             return "assembly";
         }

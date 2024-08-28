@@ -40,7 +40,7 @@ namespace lilac::csharp
     {
     public:
         [[nodiscard]]
-        std::string getName() const override;
+        std::string GetName() const override;
 
         void Begin(VisitContext& ctx, const frxml::dom& parent, const frxml::dom& current, int depth) override;
 
@@ -51,7 +51,7 @@ namespace lilac::csharp
     {
     public:
         [[nodiscard]]
-        std::string getName() const override;
+        std::string GetName() const override;
 
         void Begin(VisitContext& ctx, const frxml::dom& parent, const frxml::dom& current, int depth) override;
 
@@ -62,7 +62,7 @@ namespace lilac::csharp
     {
     public:
         [[nodiscard]]
-        std::string getName() const override;
+        std::string GetName() const override;
 
         void Begin(VisitContext& ctx, const frxml::dom& parent, const frxml::dom& current, int depth) override;
 
@@ -73,7 +73,7 @@ namespace lilac::csharp
     {
     public:
         [[nodiscard]]
-        std::string getName() const override;
+        std::string GetName() const override;
 
         void Begin(VisitContext& ctx, const frxml::dom& parent, const frxml::dom& current, int depth) override;
 
@@ -84,7 +84,7 @@ namespace lilac::csharp
     {
     public:
         [[nodiscard]]
-        std::string getName() const override;
+        std::string GetName() const override;
 
         void Begin(VisitContext& ctx, const frxml::dom& parent, const frxml::dom& current, int depth) final;
 
@@ -95,20 +95,20 @@ namespace lilac::csharp
     {
     public:
         [[nodiscard]]
-        std::string getName() const override;
+        std::string GetName() const override;
     };
 
     class CtorVisitor final : public MethodVisitor
     {
     public:
         [[nodiscard]]
-        std::string getName() const override;
+        std::string GetName() const override;
     };
 
     class DtorVisitor final : public MethodVisitor
     {
     public:
         [[nodiscard]]
-        std::string getName() const override;
+        std::string GetName() const override;
     };
 }

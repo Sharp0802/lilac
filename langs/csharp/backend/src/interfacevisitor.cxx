@@ -130,7 +130,7 @@ void lilac::csharp::CSharpAssemblyInterfaceVisitor::End(
 
 #pragma region NamespaceVisitor
 
-std::string lilac::csharp::NamespaceVisitor::getName() const
+std::string lilac::csharp::NamespaceVisitor::GetName() const
 {
     return "namespace";
 }
@@ -164,7 +164,7 @@ void lilac::csharp::NamespaceVisitor::End(
 
 #pragma region RecordVisitor
 
-std::string lilac::csharp::RecordVisitor::getName() const
+std::string lilac::csharp::RecordVisitor::GetName() const
 {
     return "record";
 }
@@ -213,7 +213,7 @@ void lilac::csharp::RecordVisitor::End(
 
 #pragma endregion
 
-std::string lilac::csharp::EnumVisitor::getName() const
+std::string lilac::csharp::EnumVisitor::GetName() const
 {
     return "enum";
 }
@@ -234,27 +234,27 @@ void lilac::csharp::EnumVisitor::End(
 {
 }
 
-std::string lilac::csharp::EnumConstantVisitor::getName() const
+std::string lilac::csharp::EnumConstantVisitor::GetName() const
 {
     return "constant";
 }
 
-std::string lilac::csharp::FunctionVisitor::getName() const
+std::string lilac::csharp::FunctionVisitor::GetName() const
 {
     return "function";
 }
 
-std::string lilac::csharp::MethodVisitor::getName() const
+std::string lilac::csharp::MethodVisitor::GetName() const
 {
     return "method";
 }
 
-std::string lilac::csharp::CtorVisitor::getName() const
+std::string lilac::csharp::CtorVisitor::GetName() const
 {
     return "ctor";
 }
 
-std::string lilac::csharp::DtorVisitor::getName() const
+std::string lilac::csharp::DtorVisitor::GetName() const
 {
     return "dtor";
 }
