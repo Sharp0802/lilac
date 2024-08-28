@@ -88,8 +88,10 @@ namespace lilac::shared
     public:
         GenericInterfaceVisitor()
         {
-            for (std::shared_ptr<InterfaceVisitor<TContext>> visitor: { std::make_shared<TVisitor>()... })
-                m_Visitors.emplace(visitor->getName(), std::move(visitor));
+            for (std::shared_ptr<InterfaceVisitor<TContext>> visitor: {
+                     static_cast<std::shared_ptr<InterfaceVisitor<TContext>>>(std::make_shared<TVisitor>())...
+                 })
+                m_Visitors.emplace(visitor->GetName(), std::move(visitor));
         }
 
         [[nodiscard]]
