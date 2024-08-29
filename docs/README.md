@@ -35,4 +35,4 @@ But, with power of LLVM, we hope that LILAC will generate bindings between C++ a
 
 ## Getting Started
 
-See [Getting Started](https://lilac.sharp0802.com/md_docs_2GettingStarted.html)
+- [Getting Started with C++ and C#](https://lilac.sharp0802.com/md_docs_2GettingStartedCppCsharp.html)
