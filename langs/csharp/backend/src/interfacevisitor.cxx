@@ -179,6 +179,7 @@ void lilac::csharp::RecordVisitor::Begin(
 {
     const auto indent = shared::GetIndent(depth);
 
+    const auto name  = current.attr().at("name").view();
     const auto size  = current.attr().at("size").view();
     const auto align = current.attr().at("align").view();
 
@@ -188,7 +189,7 @@ void lilac::csharp::RecordVisitor::Begin(
 
     ctx.Output
         << indent << "[" INTEROP_NS"StructLayout(" LAYOUT_KIND"Explicit, Size=" << size << ", Pack=" << align << ")]\n"
-        << indent << "public struct InteropTest\n"
+        << indent << "public struct " << name << "\n"
         << indent << "{\n"
         << indent << TAB "[" INTEROP_NS"FieldOffset(0)]\n"
         << indent << TAB "private byte " THIS ";\n"
@@ -339,7 +340,8 @@ void lilac::csharp::FunctionVisitor::Begin(
         if (!isUnsafe && type.contains('*'))
             isUnsafe = true;
         if (type == "bool")
-            nativeParams << "[System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.U1)] ";
+            nativeParams <<
+                "[System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.U1)] ";
         nativeParams << type << ' ' << param.attr().at("name").view();
     }
 
