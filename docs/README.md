@@ -3,6 +3,7 @@
 ![](https://img.shields.io/github/license/Sharp0802/lilac)
 ![](https://img.shields.io/github/repo-size/Sharp0802/lilac)
 ![](https://img.shields.io/github/commit-activity/m/Sharp0802/lilac)
+[![Deploy with Doxygen](https://github.com/Sharp0802/lilac/actions/workflows/doxygen.yml/badge.svg)](https://github.com/Sharp0802/lilac/actions/workflows/doxygen.yml)
 
 *LILAC* is a <b>L</b>anguage to language <b>I</b>nteroperability <b>LA</b>yer <b>C</b>ompiler -
 with a goal that producing bindings across languages.
@@ -34,4 +35,4 @@ But, with power of LLVM, we hope that LILAC will generate bindings between C++ a
 
 ## Getting Started
 
-See [Getting Started](GettingStarted.md)
+See [Getting Started](https://lilac.sharp0802.com/md_docs_2GettingStarted.html)
