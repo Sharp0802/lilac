@@ -19,6 +19,7 @@
 
 #include "pch.h"
 #include "pluginaction.h"
+#include "shared/version.h"
 
 static llvm::cl::OptionCategory Category("LILAC Frontend Options");
 
@@ -32,6 +33,11 @@ static llvm::cl::opt<std::string> Output(
 
 int main(int argc, const char* argv[])
 {
+    llvm::cl::SetVersionPrinter([](llvm::raw_ostream& ost)
+    {
+        ost << "lilac-cxx (LILAC C++) " << LILAC_DATE << '\n' << LILAC_SHORT_LICENSE;
+    });
+
     auto expectedParser = clang::tooling::CommonOptionsParser::create(argc, argv, Category);
     if (!expectedParser)
     {

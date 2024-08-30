@@ -1,5 +1,4 @@
 project(ild)
-set(VERSION 0.0.1)
 
 set(BACKENDS
         lilac-csharp-backend

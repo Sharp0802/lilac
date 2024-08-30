@@ -1,5 +1,4 @@
 project(lilac-csharp-backend)
-set(VERSION 0.0.1)
 
 file(GLOB_RECURSE SOURCES src/*.cxx)
 file(GLOB_RECURSE HEADERS *.h)
