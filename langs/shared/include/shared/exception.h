@@ -20,8 +20,7 @@
 #pragma once
 
 #include <string>
-
-#include "sub/frxml/frxml/frxml.h"
+#include <frxml.h>
 
 namespace lilac::shared
 {
