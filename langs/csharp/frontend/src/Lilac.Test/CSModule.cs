@@ -12,7 +12,7 @@ public enum CsEnum
 }
 
 [Export]
-public class CsModule
+public partial class CsModule
 {
     [Export]
     public CsModule(string a)
