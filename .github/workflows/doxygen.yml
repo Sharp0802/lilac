@@ -38,8 +38,6 @@ jobs:
 
       - name: Copy schemas
         run: cp -r schemas site/html
-        with:
-          working-directory: "."
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
