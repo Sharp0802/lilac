@@ -32,7 +32,7 @@ jobs:
 
       - name: Copy schemas
         run: |
-          mkdir site/html
+          mkdir -p site/html
           cp -r schemas site/html
 
       - name: Doxygen
