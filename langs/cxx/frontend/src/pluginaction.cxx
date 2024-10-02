@@ -335,6 +335,17 @@ namespace lilac::cxx
         if (!fn->isStatic() && tagMap.contains(fn->getKind()))
             tag = tagMap[fn->getKind()];
 
+
+        std::string virtuality = "none";
+        if (const auto method = clang::dyn_cast<clang::CXXMethodDecl>(fn); method && method->isVirtual())
+        {
+            virtuality = "virtual";
+            for (const auto attr: method->attrs())
+                if (attr->getKind() == clang::attr::Final)
+                    virtuality = "final";
+        }
+
+
         const auto proto    = fn->getType()->getAs<clang::FunctionProtoType>();
         const auto callconv = clang::FunctionType::getNameForCallConv(proto->getCallConv());
 
@@ -344,7 +355,8 @@ namespace lilac::cxx
             tag,
             {
                 { "mangle", ang.getName(fn) },
-                { "callconv", callconv.str() }
+                { "callconv", callconv.str() },
+                { "virtual", virtuality }
             });
 
         if (fn->getKind() != clang::Decl::CXXConstructor &&
