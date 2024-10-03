@@ -17,9 +17,77 @@
   ~ You should have received a copy of the GNU General Public License
   ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
   -->
-<xs:schema xmlns="https://www.w3schools.com"
-           xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           targetNamespace="https://lilac.sharp0802.com"
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="https://lilac.sharp0802.com/schemas/symbol.xsd"
+           targetNamespace="https://lilac.sharp0802.com/schemas/symbol.xsd"
            elementFormDefault="qualified">
+
+    <xs:complexType name="method">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="param">
+                <xs:complexType>
+                    <xs:attribute name="name" type="xs:string" use="required" />
+                    <xs:attribute name="type" type="xs:string" use="required" />
+                </xs:complexType>
+            </xs:element>
+        </xs:choice>
+
+        <xs:attribute name="name" type="xs:string" use="required"/>
+        <xs:attribute name="mangle" type="xs:string" use="required"/>
+        <xs:attribute name="return" type="xs:string" use="required"/>
+        <xs:attribute name="callconv" type="xs:string" use="required"/>
+
+        <xs:attribute name="virtual" use="required">
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:pattern value="(none)|(virtual)|(final)"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="record">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="method" type="method" />
+        </xs:choice>
+
+        <xs:attribute name="name" type="xs:string" use="required"/>
+        <xs:attribute name="align" type="xs:int" use="required"/>
+        <xs:attribute name="size" type="xs:int" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="enum">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="constant">
+                <xs:complexType>
+                    <xs:attribute name="name" type="xs:string" use="required" />
+                    <xs:attribute name="value" type="xs:integer" use="required" />
+                </xs:complexType>
+            </xs:element>
+        </xs:choice>
+
+        <xs:attribute name="name" type="xs:string" use="required" />
+        <xs:attribute name="type" type="xs:string" use="required" />
+    </xs:complexType>
+
+    <xs:complexType name="namespace">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="namespace" type="namespace" />
+            <xs:element name="record" type="record" />
+            <xs:element name="enum" type="enum" />
+        </xs:choice>
+
+        <xs:attribute name="name" type="xs:string" use="required"/>
+    </xs:complexType>
+
+    <xs:complexType name="assembly">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="namespace" type="namespace" />
+            <xs:element name="record" type="record" />
+            <xs:element name="enum" type="enum" />
+        </xs:choice>
+    </xs:complexType>
+
+    <xs:element name="assembly" type="assembly"/>
 
 </xs:schema>
