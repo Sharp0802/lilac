@@ -19,24 +19,28 @@
 
 #include "pch.h"
 #include "pluginaction.h"
+#include "shared/frontend.h"
 #include "shared/version.h"
 
-static llvm::cl::OptionCategory Category("LILAC Frontend Options");
+#if __unix__
+#include <glob.h>
+#endif
 
-static llvm::cl::opt<std::string> Output(
-    "o",
-    llvm::cl::Required,
-    llvm::cl::ValueRequired,
-    llvm::cl::value_desc("file"),
-    llvm::cl::desc("Place output into <file>."),
-    llvm::cl::cat(Category));
-
-int main(int argc, const char* argv[])
+class CXXFrontendAction final : public lilac::shared::FrontendAction
 {
-    llvm::cl::SetVersionPrinter([](llvm::raw_ostream& ost)
+public:
+    CXXFrontendAction()
+        : FrontendAction(lilac::shared::F_CXX, "c++", "C++ frontend module")
     {
-        ost << "lilac-cxx (LILAC C++) " << LILAC_DATE << '\n' << LILAC_SHORT_LICENSE;
-    });
+    }
+
+    [[nodiscard]]
+    int Run(std::string output, std::vector<std::string> argv) const override
+    {
+        llvm::cl::SetVersionPrinter([](llvm::raw_ostream& ost)
+        {
+            ost << "lilac-cxx (LILAC C++) " << LILAC_DATE << '\n' << LILAC_SHORT_LICENSE;
+        });
 
     auto expectedParser = clang::tooling::CommonOptionsParser::create(argc, argv, Category);
     if (!expectedParser)
@@ -44,15 +48,35 @@ int main(int argc, const char* argv[])
         llvm::errs() << expectedParser.takeError();
         return 1;
     }
+        std::vector<const char*> buffer(argv.size() + 1);
+        buffer[0] = "lilac-cxx";
+        for (int i = 0; i < argv.size(); ++i)
+            buffer[i + 1] = argv[i].c_str();
 
-    auto& parser = expectedParser.get();
 
-    clang::tooling::ClangTool tool(parser.getCompilations(), parser.getSourcePathList());
-    if (const auto ret = tool.run(clang::tooling::newFrontendActionFactory<lilac::cxx::LilacAction>().get()))
-        return ret;
+        int argc = buffer.size();
 
-    auto& root = lilac::cxx::GetDOMRoot();
+        auto expectedParser = clang::tooling::CommonOptionsParser::create(argc, buffer.data(), llvm::cl::getGeneralCategory());
+        if (!expectedParser)
+        {
+            llvm::errs() << expectedParser.takeError();
+            return 1;
+        }
 
-    std::ofstream ofs(Output.getValue());
-    ofs << static_cast<std::string>(frxml::doc{ root });
-}
+        auto& parser = expectedParser.get();
+
+        clang::tooling::ClangTool tool(parser.getCompilations(), parser.getSourcePathList());
+        if (const auto ret = tool.run(clang::tooling::newFrontendActionFactory<lilac::cxx::LilacAction>().get()))
+            return ret;
+
+        auto& root = lilac::cxx::GetDOMRoot();
+
+        std::ofstream ofs(output);
+        ofs << static_cast<std::string>(frxml::doc{ root });
+
+        return 0;
+    }
+};
+
+[[maybe_unused]]
+static CXXFrontendAction _;

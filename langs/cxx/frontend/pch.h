@@ -44,6 +44,7 @@
 #include <llvm/IR/Attributes.h>
 #include <llvm/Linker/Linker.h>
 #include <llvm/Support/CommandLine.h>
+#include <llvm/TargetParser/Host.h>
 
 /********************************
  * External Dependencies        *
