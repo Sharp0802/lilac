@@ -24,9 +24,9 @@
 
 namespace lilac::shared
 {
-    enum ModuleKind
+    enum BackendKind
     {
-        CSharp
+        B_CSharp
     };
 
     /**
@@ -36,10 +36,10 @@ namespace lilac::shared
     {
         const std::string m_Name;
         const std::string m_Desc;
-        ModuleKind        m_Kind;
+        BackendKind        m_Kind;
 
     public:
-        BackendAction(ModuleKind kind, std::string name, std::string desc);
+        BackendAction(BackendKind kind, std::string name, std::string desc);
 
         virtual ~BackendAction() = default;
 
@@ -62,7 +62,7 @@ namespace lilac::shared
          * @return The kind of this action
          */
         [[nodiscard]]
-        ModuleKind Kind() const;
+        BackendKind Kind() const;
 
         /**
          * @brief Runs action with given paths
@@ -76,7 +76,8 @@ namespace lilac::shared
         virtual int Run(
             std::string confPath,
             std::string libPath,
-            std::string outPath) const = 0;
+            std::string outPath,
+            std::vector<std::string> argv) const = 0;
 
         /**
          * @brief Gets all registered actions

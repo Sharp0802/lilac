@@ -25,7 +25,7 @@
 static std::vector<lilac::shared::BackendAction*> backends;
 
 
-lilac::shared::BackendAction::BackendAction(ModuleKind kind, std::string name, std::string desc)
+lilac::shared::BackendAction::BackendAction(BackendKind kind, std::string name, std::string desc)
     : m_Name(std::move(name)), m_Desc(std::move(desc)), m_Kind(kind)
 {
     backends.push_back(this);
@@ -41,7 +41,7 @@ const std::string& lilac::shared::BackendAction::Desc() const
     return m_Desc;
 }
 
-lilac::shared::ModuleKind lilac::shared::BackendAction::Kind() const
+lilac::shared::BackendKind lilac::shared::BackendAction::Kind() const
 {
     return m_Kind;
 }

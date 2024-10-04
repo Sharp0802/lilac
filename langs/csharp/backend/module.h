@@ -32,6 +32,6 @@ namespace lilac::csharp
         CSharpBackendAction();
 
         [[nodiscard]]
-        int Run(std::string confPath, std::string libPath, std::string outPath) const override;
+        int Run(std::string confPath, std::string libPath, std::string outPath, std::vector<std::string> argv) const override;
     };
 }

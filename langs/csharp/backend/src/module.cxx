@@ -40,11 +40,12 @@ std::map<int, std::string> errorMap = {
     { frxml::E_INVETAG, "Invalid ETag" }
 };
 
-lilac::csharp::CSharpBackendAction::CSharpBackendAction(): BackendAction(shared::CSharp, "csharp", "C# backend module")
+lilac::csharp::CSharpBackendAction::CSharpBackendAction()
+    : BackendAction(shared::B_CSharp, "c#", "C# backend module")
 {
 }
 
-int lilac::csharp::CSharpBackendAction::Run(std::string confPath, std::string libPath, std::string outPath) const
+int lilac::csharp::CSharpBackendAction::Run(std::string confPath, std::string libPath, std::string outPath, std::vector<std::string> argv) const
 {
     std::stringstream input;
     try
@@ -79,6 +80,8 @@ int lilac::csharp::CSharpBackendAction::Run(std::string confPath, std::string li
 
     try
     {
+        if (!outPath.ends_with('/'))
+            outPath += libPath + ".sym";
         std::ofstream ofs(outPath);
 
         VisitContext ctx{ "", libPath, ofs };
