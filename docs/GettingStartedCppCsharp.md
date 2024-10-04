@@ -62,7 +62,7 @@ void cxx::CXXModule::Hello()
 - `cxx::CXXModule` and `cxx::CXXModule::Hello()` are export target (can be specified by `[[lilac::export]]`)
 - `cxx::CXXModule::Hello()` prints `Hello from C++!` to console.
 
-## Compile interface representation
+## Compile interface symbol
 
 ```shell
 $ cd <sample-directory>

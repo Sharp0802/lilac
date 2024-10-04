@@ -9,8 +9,8 @@
 
 ### Compile Path
 
-1. Compile interface representation from source (*.jar for Java, *.dll for C#, etc...)
-2. Generate bridge from interface representation
+1. Compile interface symbol from source (*.jar for Java, *.dll for C#, etc...)
+2. Generate bridge from interface symbol
 
 ### Call Path
 
