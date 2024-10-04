@@ -24,6 +24,9 @@
 
 namespace lilac
 {
+    /**
+     * @brief A sub-command that generates bindings from symbols
+     */
     class GenerateSubCommand final : public SubCommand
     {
         llvm::cl::opt<std::string>         OutputPath;

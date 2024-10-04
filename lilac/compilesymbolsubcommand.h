@@ -24,6 +24,9 @@
 
 namespace lilac
 {
+    /**
+     * @brief A sub-command that compiles assemblies into symbols
+     */
     class CompileSymbolSubCommand final : public SubCommand
     {
         llvm::cl::opt<shared::FrontendKind> Language;
