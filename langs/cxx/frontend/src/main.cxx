@@ -42,17 +42,56 @@ public:
             ost << "lilac-cxx (LILAC C++) " << LILAC_DATE << '\n' << LILAC_SHORT_LICENSE;
         });
 
-    auto expectedParser = clang::tooling::CommonOptionsParser::create(argc, argv, Category);
-    if (!expectedParser)
-    {
-        llvm::errs() << expectedParser.takeError();
-        return 1;
-    }
         std::vector<const char*> buffer(argv.size() + 1);
         buffer[0] = "lilac-cxx";
         for (int i = 0; i < argv.size(); ++i)
             buffer[i + 1] = argv[i].c_str();
 
+#if __unix__
+        // NOTE: clang couldn't find `stddef.h` on UNIXen
+
+        // Find candidates of clang with glob
+        glob_t glob{};
+        if (auto ret = ::glob("/usr/lib/clang/*/include", GLOB_TILDE, nullptr, &glob))
+        {
+            globfree(&glob);
+            llvm::errs()
+                << "glob() failed with return value: " << ret << '\n'
+                << "is Clang installed with proper directory?";
+            return 1;
+        }
+
+        std::vector<std::string> candidates(glob.gl_pathc);
+        for (auto i = 0; i < glob.gl_pathc; ++i)
+        {
+            llvm::outs() << "Found candidate Clang installation: " << glob.gl_pathv[i] << '\n';
+            candidates[i] = glob.gl_pathv[i];
+        }
+
+        // Use latest version of clang
+        struct
+        {
+            static constexpr long int GetIndex(const std::string& t)
+            {
+                return strtol(t.data() + 15, nullptr, 10);
+            }
+
+            constexpr bool operator()(const std::string& lhs, const std::string& rhs) const
+            {
+                return GetIndex(lhs) > GetIndex(rhs);
+            }
+        } comp;
+        std::ranges::sort(candidates, comp);
+
+        llvm::outs() << "Selected Clang installation: " << candidates[0] << '\n';
+
+        // Add include path
+        buffer.push_back("--");
+        buffer.push_back("-I");
+        buffer.push_back(candidates[0].data());
+
+        globfree(&glob);
+#endif
 
         int argc = buffer.size();
 
