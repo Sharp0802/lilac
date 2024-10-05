@@ -102,4 +102,4 @@ int lilac::csharp::CSharpBackendAction::Run(std::string confPath, std::string li
 }
 
 [[maybe_unused]]
-static lilac::csharp::CSharpBackendAction Action;
+lilac::csharp::CSharpBackendAction Action;
