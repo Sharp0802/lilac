@@ -33,6 +33,19 @@ But, with power of LLVM, we hope that LILAC will generate bindings between C++ a
 - ? : Not implemented, but planned.
 - ! : Work in Progress
 
+## Build Requisites
+
+| Component  | Tested on | Misc.            |
+|:----------:|:----------|:-----------------|
+| LLVM/Clang | LLVM 20   |                  |
+
+## Runtime Requirements
+
+| Component  | Tested on | Misc.            |
+|:----------:|:----------|:-----------------|
+| LLVM/Clang | LLVM 20   |                  |
+|    .NET    | .NET 8    | Only C# frontend |
+
 ## Getting Started
 
 - [Getting Started with C++ and C#](https://lilac.sharp0802.com/md_docs_2GettingStartedCppCsharp.html)
