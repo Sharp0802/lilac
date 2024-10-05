@@ -81,7 +81,8 @@ int lilac::csharp::CSharpBackendAction::Run(std::string confPath, std::string li
     try
     {
         if (!outPath.ends_with('/'))
-            outPath += libPath + ".sym";
+            outPath += "/";
+        outPath += libPath + ".cs";
         std::ofstream ofs(outPath);
 
         VisitContext ctx{ "", libPath, ofs };
