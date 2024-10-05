@@ -73,23 +73,13 @@ $ cmake -B build
 - During configuration job, `compile_commands.json` will be generated at build directory.
 
 ```shell
-$ lilac-cxx -p build -o lilac.xml cxx/test.cxx
+$ lilac sym --from c++ -o lilac.xml -p build cxx/test.cxx
 ```
 
-- `-p build` make lilac-cxx use `build` as build directory
-- `-o lilac.xml` make lilac-cxx place output to `lilac.xml`
+- `sym --from c++` make `lilac` extract symbols from C++ sources
+- `-o lilac.xml` make `lilac` place output to `lilac.xml`
+- `-p build` make `lilac` use `build` as build directory
 - if arguments provided without option (such as `cxx/test.cxx`), given arguments will be considered as analyzing target
-
-> [!WARNING]
-> If you encounter error such as `fatal error: *.h file not found`,
-> You can solve it with `-- -I /lib64/gcc/x86_64-pc-linux-gnu/14.2.1/include`.
-> (`/lib64/gcc/x86_64-pc-linux-gnu/14.2.1/include` should be replaced with one of your default include directory)
-> Arguments after `--` will be passed to `clang`. <br/>
-> Thus, `-- -I <your-include-dir>` will make `clang` to use correct include directory.
-> To execute `lilac-cxx` with this option, Use below:
-> ```shell
-> $ lilac-cxx -p build -o lilac.xml cxx/test.cxx -- -I /lib64/gcc/x86_64-pc-linux-gnu/14.2.1/include
-> ```
 
 ## Prepare C# project
 
@@ -138,15 +128,13 @@ Just use `cxx::CXXModule().Hello()` (C++) as `cxx.CXXModule().Hello()` (C#)!
 > See [this](https://learn.microsoft.com/en-us/dotnet/standard/native-interop/pinvoke)
 
 ```shell
-$ ild --module=csharp -i lilac.xml -l test -o MyConsole/Test.cs
+$ lilac bind --to c# --sym lilac.xml --name Test -o MyConsole
 ```
 
-`ild` (interface ld) will convert your C++ interface data to C# binding.
-
-- `--module=csharp` specifies target language is C#
-- `-i lilac.xml` makes `ild` to use `lilac.xml` as interface data
-- `-l test` assumes name of native library is `libtest.so` or `test.so` or `libtest.dll` or `test.dll` etc...
-- `-o MyConsole/Test.cs` let `ild` place C# binding to `MyConsole/Test.cs`
+- `bind --to c#` specifies target language is C#
+- `--sym lilac.xml` makes `lilac` to use `lilac.xml` as interface symbol
+- `--name test` assumes name of native library is `libtest.so` or `test.so` or `libtest.dll` or `test.dll` etc...
+- `-o MyConsole` let `lilac` place C# binding to `MyConsole/Test.cs`
 
 Generated C# binding for given C++ source:
 
